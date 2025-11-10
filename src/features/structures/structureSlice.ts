@@ -2,10 +2,12 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 
 // Types
-interface Structure {
+export interface Structure {
   id: number;
   nom: string;
-  code: string;
+  diminutif?: string;
+  logo?: string;
+  adresse: string;
 }
 
 interface StructureState {
@@ -41,7 +43,10 @@ export const createStructure = createAsyncThunk(
       const response = await api.post('/structures', structureData);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Une erreur est survenue');
+      return rejectWithValue({
+        message: error.response?.data?.message || 'Une erreur est survenue',
+        errors: error.response?.data?.errors || null
+      });
     }
   }
 );
@@ -53,7 +58,10 @@ export const updateStructure = createAsyncThunk(
       const response = await api.put(`/structures/${id}`, structureData);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Une erreur est survenue');
+      return rejectWithValue({
+        message: error.response?.data?.message || 'Une erreur est survenue',
+        errors: error.response?.data?.errors || null
+      });
     }
   }
 );

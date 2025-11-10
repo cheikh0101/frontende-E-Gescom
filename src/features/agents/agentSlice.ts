@@ -4,10 +4,18 @@ import api from '../../services/api';
 // Types
 interface Agent {
   id: number;
-  nom: string;
   prenom: string;
-  matricule: string;
+  nom: string;
+  email: string;
+  password?: string;
+  telephone?: string;
+  matricule?: string;
+  date_de_naissance: string;
+  lieu_de_naissance: string;
+  numero_cni: string;
+  adresse: string;
   structure_id: number;
+  banque_id: number;
 }
 
 interface AgentState {
@@ -43,7 +51,10 @@ export const createAgent = createAsyncThunk(
       const response = await api.post('/agents', agentData);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Une erreur est survenue');
+      return rejectWithValue({
+        message: error.response?.data?.message || 'Une erreur est survenue',
+        errors: error.response?.data?.errors || null
+      });
     }
   }
 );
@@ -55,7 +66,10 @@ export const updateAgent = createAsyncThunk(
       const response = await api.put(`/agents/${id}`, agentData);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Une erreur est survenue');
+      return rejectWithValue({
+        message: error.response?.data?.message || 'Une erreur est survenue',
+        errors: error.response?.data?.errors || null
+      });
     }
   }
 );

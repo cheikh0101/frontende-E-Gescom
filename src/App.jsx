@@ -9,6 +9,8 @@ import Agents from './pages/Agents';
 import Contrats from './pages/Contrats';
 import Structures from './pages/Structures';
 import Banques from './pages/Banques';
+import StateContrats from './pages/StateContrats';
+import StateEtatPaiements from './pages/StateEtatPaiements';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import EtatPaiements from './pages/EtatPaiements';
@@ -77,6 +79,8 @@ function App() {
         <Route path="structures" element={<Structures />} />
         <Route path="agents" element={<Agents />} />
         <Route path="contrats" element={<Contrats />} />
+        <Route path="state-contrats" element={<StateContrats />} />
+        <Route path="state-etat-paiements" element={<StateEtatPaiements />} />
         <Route path="banques" element={<Banques />} />
         <Route path="paiements" element={<EtatPaiements />} />
         <Route path="profile" element={<Profile />} />

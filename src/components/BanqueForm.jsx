@@ -3,11 +3,12 @@ import {
   Box,
   TextField,
   Button,
-  Grid
+  Grid,
+  Alert
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Cancel as CancelIcon } from '@mui/icons-material';
 
-const BanqueForm = ({ banque, onSubmit, onCancel }) => {
+const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
   const [formData, setFormData] = useState({
     code: '',
     nom: '',
@@ -43,6 +44,22 @@ const BanqueForm = ({ banque, onSubmit, onCancel }) => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+      {errors && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {typeof errors === 'string' ? errors : (
+            <Box>
+              <strong>Erreurs de validation :</strong>
+              <ul style={{ marginTop: '8px', marginBottom: 0 }}>
+                {Object.entries(errors).map(([field, messages]) => (
+                  <li key={field}>
+                    <strong>{field}:</strong> {Array.isArray(messages) ? messages.join(', ') : messages}
+                  </li>
+                ))}
+              </ul>
+            </Box>
+          )}
+        </Alert>
+      )}
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <TextField
@@ -54,7 +71,8 @@ const BanqueForm = ({ banque, onSubmit, onCancel }) => {
             onChange={handleChange}
             variant="outlined"
             disabled={!!banque?.id}
-            helperText={banque?.id ? "Le code ne peut pas être modifié" : "Code unique de la banque"}
+            error={!!(errors?.code)}
+            helperText={errors?.code?.[0] || (banque?.id ? "Le code ne peut pas être modifié" : "Code unique de la banque")}
           />
         </Grid>
         <Grid item xs={12}>
@@ -66,7 +84,8 @@ const BanqueForm = ({ banque, onSubmit, onCancel }) => {
             value={formData.nom}
             onChange={handleChange}
             variant="outlined"
-            helperText="Nom complet de la banque"
+            error={!!(errors?.nom)}
+            helperText={errors?.nom?.[0] || "Nom complet de la banque"}
           />
         </Grid>
         <Grid item xs={12}>
@@ -78,7 +97,8 @@ const BanqueForm = ({ banque, onSubmit, onCancel }) => {
             onChange={handleChange}
             variant="outlined"
             placeholder="Ex: 12345"
-            helperText="Code guichet (optionnel)"
+            error={!!(errors?.guichet)}
+            helperText={errors?.guichet?.[0] || "Code guichet (optionnel)"}
           />
         </Grid>
         <Grid item xs={12}>
@@ -91,7 +111,8 @@ const BanqueForm = ({ banque, onSubmit, onCancel }) => {
             onChange={handleChange}
             variant="outlined"
             placeholder="Ex: 1234567890"
-            helperText="Numéro de compte bancaire"
+            error={!!(errors?.numero_compte)}
+            helperText={errors?.numero_compte?.[0] || "Numéro de compte bancaire"}
           />
         </Grid>
         <Grid item xs={12}>
@@ -104,7 +125,8 @@ const BanqueForm = ({ banque, onSubmit, onCancel }) => {
             onChange={handleChange}
             variant="outlined"
             placeholder="Ex: FR7612345678901234567890123"
-            helperText="Code IBAN international"
+            error={!!(errors?.iban)}
+            helperText={errors?.iban?.[0] || "Code IBAN international"}
           />
         </Grid>
         <Grid item xs={12}>

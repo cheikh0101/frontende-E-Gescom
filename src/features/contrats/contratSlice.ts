@@ -4,12 +4,16 @@ import api from '../../services/api';
 // Types
 interface Contrat {
   id: number;
-  numero: string;
-  agent_id: number;
-  structure_id: number;
+  type: string;
   date_debut: string;
   date_fin: string;
-  montant: number;
+  montant_total: number;
+  montant_net: number;
+  montant_retenu: number;
+  fonction: string;
+  fichier?: string;
+  date_resiliation?: string;
+  agent_id: number;
 }
 
 interface ContratState {

@@ -4,8 +4,10 @@ import api from '../../services/api';
 // Types
 interface StateEtatPaiement {
   id: number;
-  libelle: string;
-  description?: string;
+  code: string;
+  nom: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface StateEtatPaiementState {
@@ -42,7 +44,7 @@ export const createStateEtatPaiement = createAsyncThunk(
       const response = await api.post('/state-etat-paiements', data);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Erreur lors de la création de l\'état de paiement');
+      return rejectWithValue(error.response?.data?.errors || error.response?.data?.message || 'Erreur lors de la création de l\'état de paiement');
     }
   }
 );
@@ -54,7 +56,7 @@ export const updateStateEtatPaiement = createAsyncThunk(
       const response = await api.put(`/state-etat-paiements/${id}`, data);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Erreur lors de la mise à jour de l\'état de paiement');
+      return rejectWithValue(error.response?.data?.errors || error.response?.data?.message || 'Erreur lors de la mise à jour de l\'état de paiement');
     }
   }
 );

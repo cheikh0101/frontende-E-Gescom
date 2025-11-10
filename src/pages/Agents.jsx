@@ -8,6 +8,7 @@ import {
   setSelectedAgent
 } from '../features/agents/agentSlice';
 import { fetchStructures } from '../features/structures/structureSlice';
+import { fetchBanques } from '../features/banques/banqueSlice';
 import {
   Box,
   Typography,
@@ -32,35 +33,49 @@ import {
   Tooltip,
   InputAdornment,
   TextField,
-  Avatar
+  Avatar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
   Person as PersonIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import AgentForm from '../components/AgentForm';
 
 const Agents = () => {
   const dispatch = useAppDispatch();
   const { agents, isLoading, error, selectedAgent } = useAppSelector((state) => state.agents);
+  const { structures } = useAppSelector((state) => state.structures);
   const [editingAgent, setEditingAgent] = useState(null);
+  const [viewingAgent, setViewingAgent] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [formErrors, setFormErrors] = useState(null);
+  const [filterStructure, setFilterStructure] = useState('');
 
   useEffect(() => {
     dispatch(fetchAgents());
     dispatch(fetchStructures());
+    dispatch(fetchBanques());
   }, [dispatch]);
 
-  const filteredAgents = agents.filter(agent =>
-    agent.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agent.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agent.matricule?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAgents = agents.filter(agent => {
+    const matchesSearch = agent.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      agent.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      agent.matricule?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStructure = filterStructure === '' || agent.structure_id === Number(filterStructure);
+    
+    return matchesSearch && matchesStructure;
+  });
 
   return (
     <Box sx={{ p: 3 }}>
@@ -131,28 +146,129 @@ const Agents = () => {
         <DialogContent sx={{ mt: 2 }}>
           <AgentForm
             agent={editingAgent}
+            errors={formErrors}
             onSubmit={(data) => {
+              setFormErrors(null); // Réinitialiser les erreurs
               if (editingAgent?.id) {
-                dispatch(updateAgent({ id: editingAgent.id, ...data }))
+                dispatch(updateAgent({ id: editingAgent.id, agentData: data }))
                   .unwrap()
                   .then(() => {
                     setSuccessMessage('Agent mis à jour avec succès');
                     setEditingAgent(null);
+                    setFormErrors(null);
                   })
-                  .catch(() => {});
+                  .catch((error) => {
+                    if (error.errors) {
+                      setFormErrors(error.errors);
+                    }
+                  });
               } else {
                 dispatch(createAgent(data))
                   .unwrap()
                   .then(() => {
                     setSuccessMessage('Agent créé avec succès');
                     setEditingAgent(null);
+                    setFormErrors(null);
                   })
-                  .catch(() => {});
+                  .catch((error) => {
+                    if (error.errors) {
+                      setFormErrors(error.errors);
+                    }
+                  });
               }
             }}
-            onCancel={() => setEditingAgent(null)}
+            onCancel={() => {
+              setEditingAgent(null);
+              setFormErrors(null);
+            }}
           />
         </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(viewingAgent)}
+        onClose={() => setViewingAgent(null)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
+      >
+        <DialogTitle sx={{ bgcolor: 'info.main', color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <PersonIcon />
+          Détails de l'agent
+        </DialogTitle>
+        <DialogContent sx={{ mt: 3 }}>
+          {viewingAgent && (
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Prénom</Typography>
+                <Typography variant="body1" fontWeight={500}>{viewingAgent.prenom}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Nom</Typography>
+                <Typography variant="body1" fontWeight={500}>{viewingAgent.nom}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Email</Typography>
+                <Typography variant="body1">{viewingAgent.email}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Téléphone</Typography>
+                <Typography variant="body1">{viewingAgent.telephone || '-'}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Matricule</Typography>
+                <Typography variant="body1">
+                  {viewingAgent.matricule ? (
+                    <Chip label={viewingAgent.matricule} color="primary" size="small" />
+                  ) : '-'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Date de naissance</Typography>
+                <Typography variant="body1">{viewingAgent.date_de_naissance || '-'}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Lieu de naissance</Typography>
+                <Typography variant="body1">{viewingAgent.lieu_de_naissance}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Numéro CNI</Typography>
+                <Typography variant="body1">{viewingAgent.numero_cni}</Typography>
+              </Box>
+              <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
+                <Typography variant="caption" color="text.secondary">Adresse</Typography>
+                <Typography variant="body1">{viewingAgent.adresse}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Structure</Typography>
+                <Typography variant="body1">
+                  <Chip 
+                    label={viewingAgent.structure?.nom || 'Non assigné'} 
+                    color="secondary" 
+                    size="small"
+                    variant="outlined"
+                  />
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Banque</Typography>
+                <Typography variant="body1">
+                  <Chip 
+                    label={viewingAgent.banque?.nom || 'Non assigné'} 
+                    color="primary" 
+                    size="small"
+                    variant="outlined"
+                  />
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setViewingAgent(null)} variant="outlined">
+            Fermer
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog
@@ -193,19 +309,36 @@ const Agents = () => {
       </Dialog>
 
       <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-        <TextField
-          fullWidth
-          placeholder="Rechercher par nom, prénom ou matricule..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="action" />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <TextField
+            fullWidth
+            placeholder="Rechercher par nom, prénom ou matricule..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <FormControl sx={{ minWidth: { xs: '100%', sm: 250 } }}>
+            <InputLabel>Structure</InputLabel>
+            <Select
+              value={filterStructure}
+              onChange={(e) => setFilterStructure(e.target.value)}
+              label="Structure"
+            >
+              <MenuItem value="">Toutes les structures</MenuItem>
+              {structures.map((structure) => (
+                <MenuItem key={structure.id} value={structure.id}>
+                  {structure.nom}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
       </Paper>
 
       <Paper sx={{ width: '100%', overflow: 'hidden', borderRadius: 2, boxShadow: 3 }}>
@@ -213,9 +346,9 @@ const Agents = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Nom</TableCell>
+                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Prénom</TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Matricule</TableCell>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Agent</TableCell>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Date de naissance</TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Structure</TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }} align="right">Actions</TableCell>
               </TableRow>
@@ -246,27 +379,26 @@ const Agents = () => {
                     sx={{ cursor: 'pointer' }}
                   >
                     <TableCell>
-                      <Chip label={agent.matricule} color="primary" size="small" />
-                    </TableCell>
-                    <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
                           {agent.nom?.charAt(0)}
                         </Avatar>
-                        <Box>
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            {agent.nom} {agent.prenom}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {agent.lieu_naissance}
-                          </Typography>
-                        </Box>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {agent.nom}
+                        </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">
-                        {new Date(agent.date_naissance).toLocaleDateString('fr-FR')}
+                      <Typography variant="body1">
+                        {agent.prenom}
                       </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {agent.matricule ? (
+                        <Chip label={agent.matricule} color="primary" size="small" />
+                      ) : (
+                        <Typography color="text.secondary" fontSize="0.875rem">-</Typography>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Chip
@@ -277,6 +409,18 @@ const Agents = () => {
                       />
                     </TableCell>
                     <TableCell align="right">
+                      <Tooltip title="Voir">
+                        <IconButton
+                          size="small"
+                          color="info"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingAgent(agent);
+                          }}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title="Modifier">
                         <IconButton
                           size="small"

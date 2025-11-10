@@ -1,0 +1,277 @@
+import React, { useEffect } from 'react';
+import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Alert } from '@mui/material';
+import { useAppSelector } from '../app/hooks';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+
+const AgentForm = ({
+  onSubmit,
+  agent,
+  isSubmitting = false,
+  onCancel,
+  errors = null
+}) => {
+  const [formData, setFormData] = React.useState({
+    prenom: '',
+    nom: '',
+    email: '',
+    password: '',
+    telephone: '',
+    matricule: '',
+    date_de_naissance: null,
+    lieu_de_naissance: '',
+    numero_cni: '',
+    adresse: '',
+    structure_id: '',
+    banque_id: ''
+  });
+  
+  const { structures = [] } = useAppSelector((state) => state.structures || { structures: [] });
+  const { banques = [] } = useAppSelector((state) => state.banques || { banques: [] });
+
+  useEffect(() => {
+    if (agent?.id) {
+      setFormData({
+        prenom: agent.prenom || '',
+        nom: agent.nom || '',
+        email: agent.email || '',
+        password: '',
+        telephone: agent.telephone || '',
+        matricule: agent.matricule || '',
+        date_de_naissance: agent.date_de_naissance || null,
+        lieu_de_naissance: agent.lieu_de_naissance || '',
+        numero_cni: agent.numero_cni || '',
+        adresse: agent.adresse || '',
+        structure_id: agent.structure_id || '',
+        banque_id: agent.banque_id || ''
+      });
+    } else {
+      setFormData({
+        prenom: '',
+        nom: '',
+        email: '',
+        password: '',
+        telephone: '',
+        matricule: '',
+        date_de_naissance: null,
+        lieu_de_naissance: '',
+        numero_cni: '',
+        adresse: '',
+        structure_id: '',
+        banque_id: ''
+      });
+    }
+  }, [agent]);
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleDateChange = (date) => {
+    setFormData((prev) => ({
+      ...prev,
+      date_de_naissance: date ? dayjs(date).format('YYYY-MM-DD') : null,
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Nettoyer les données avant envoi
+    const cleanedData = { ...formData };
+    
+    // Supprimer le mot de passe s'il est vide (modification)
+    if (agent?.id && !cleanedData.password) {
+      delete cleanedData.password;
+    }
+    
+    // Supprimer les champs vides optionnels
+    if (!cleanedData.telephone) delete cleanedData.telephone;
+    if (!cleanedData.matricule) delete cleanedData.matricule;
+    
+    // Convertir structure_id et banque_id en nombres
+    if (cleanedData.structure_id) {
+      cleanedData.structure_id = Number(cleanedData.structure_id);
+    }
+    
+    if (cleanedData.banque_id) {
+      cleanedData.banque_id = Number(cleanedData.banque_id);
+    }
+    
+    onSubmit(cleanedData);
+  };
+
+  return (
+    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {errors && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {typeof errors === 'string' ? errors : (
+            <Box>
+              <strong>Erreurs de validation :</strong>
+              <ul style={{ marginTop: '8px', marginBottom: 0 }}>
+                {Object.entries(errors).map(([field, messages]) => (
+                  <li key={field}>
+                    <strong>{field}:</strong> {Array.isArray(messages) ? messages.join(', ') : messages}
+                  </li>
+                ))}
+              </ul>
+            </Box>
+          )}
+        </Alert>
+      )}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+        <TextField
+          name="prenom"
+          label="Prénom"
+          value={formData.prenom}
+          onChange={handleChange}
+          required
+          fullWidth
+        />
+        <TextField
+          name="nom"
+          label="Nom"
+          value={formData.nom}
+          onChange={handleChange}
+          required
+          fullWidth
+        />
+        <TextField
+          name="email"
+          label="Email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+          fullWidth
+          error={!!(errors?.email)}
+          helperText={errors?.email?.[0] || ''}
+        />
+        <TextField
+          name="password"
+          label="Mot de passe"
+          type="password"
+          value={formData.password}
+          onChange={handleChange}
+          required={!agent?.id}
+          fullWidth
+          error={!!(errors?.password)}
+          helperText={errors?.password?.[0] || (agent?.id ? "Laissez vide pour ne pas changer" : "")}
+        />
+        <TextField
+          name="telephone"
+          label="Téléphone"
+          value={formData.telephone}
+          onChange={handleChange}
+          fullWidth
+          error={!!(errors?.telephone)}
+          helperText={errors?.telephone?.[0] || ''}
+        />
+        <TextField
+          name="matricule"
+          label="Matricule"
+          value={formData.matricule}
+          onChange={handleChange}
+          fullWidth
+          error={!!(errors?.matricule)}
+          helperText={errors?.matricule?.[0] || ''}
+        />
+        <DatePicker
+          label="Date de naissance"
+          value={formData.date_de_naissance ? dayjs(formData.date_de_naissance) : null}
+          onChange={handleDateChange}
+          format="DD/MM/YYYY"
+          slotProps={{
+            textField: {
+              required: true,
+              fullWidth: true
+            }
+          }}
+        />
+        <TextField
+          name="lieu_de_naissance"
+          label="Lieu de naissance"
+          value={formData.lieu_de_naissance}
+          onChange={handleChange}
+          required
+          fullWidth
+        />
+        <TextField
+          name="numero_cni"
+          label="Numéro CNI"
+          value={formData.numero_cni}
+          onChange={handleChange}
+          required
+          fullWidth
+          error={!!(errors?.numero_cni)}
+          helperText={errors?.numero_cni?.[0] || ''}
+        />
+        <TextField
+          name="adresse"
+          label="Adresse"
+          value={formData.adresse}
+          onChange={handleChange}
+          required
+          fullWidth
+          multiline
+          rows={2}
+          error={!!(errors?.adresse)}
+          helperText={errors?.adresse?.[0] || ''}
+        />
+        <FormControl fullWidth required>
+          <InputLabel>Structure</InputLabel>
+          <Select
+            name="structure_id"
+            value={formData.structure_id}
+            onChange={handleChange}
+            label="Structure"
+          >
+            {(structures || []).map((structure) => (
+              <MenuItem key={structure.id} value={structure.id}>
+                {structure.nom}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl fullWidth required>
+          <InputLabel>Banque</InputLabel>
+          <Select
+            name="banque_id"
+            value={formData.banque_id}
+            onChange={handleChange}
+            label="Banque"
+          >
+            {(banques || []).map((banque) => (
+              <MenuItem key={banque.id} value={banque.id}>
+                {banque.nom}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+        <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+          <Button 
+            type="submit" 
+            variant="contained" 
+            disabled={isSubmitting}
+          >
+            {agent?.id ? 'Modifier' : 'Ajouter'}
+          </Button>
+          {onCancel && (
+            <Button 
+              variant="outlined" 
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              Annuler
+            </Button>
+          )}
+        </Box>
+    </Box>
+  );
+};
+
+export default AgentForm;

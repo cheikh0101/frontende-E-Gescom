@@ -48,6 +48,7 @@ const Structures = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [formErrors, setFormErrors] = useState(null);
 
   useEffect(() => {
     dispatch(fetchStructures());
@@ -55,8 +56,8 @@ const Structures = () => {
 
   const filteredStructures = structures.filter(structure =>
     structure.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    structure.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    structure.type?.toLowerCase().includes(searchTerm.toLowerCase())
+    structure.diminutif?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    structure.adresse?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -120,26 +121,41 @@ const Structures = () => {
         <DialogContent sx={{ mt: 2 }}>
           <StructureForm
             structure={editingStructure}
+            errors={formErrors}
             onSubmit={(data) => {
+              setFormErrors(null);
               if (editingStructure?.id) {
-                dispatch(updateStructure({ id: editingStructure.id, ...data }))
+                dispatch(updateStructure({ id: editingStructure.id, structureData: data }))
                   .unwrap()
                   .then(() => {
                     setSuccessMessage('Structure mise à jour avec succès');
                     setEditingStructure(null);
+                    setFormErrors(null);
                   })
-                  .catch(() => {});
+                  .catch((error) => {
+                    if (error.errors) {
+                      setFormErrors(error.errors);
+                    }
+                  });
               } else {
                 dispatch(createStructure(data))
                   .unwrap()
                   .then(() => {
                     setSuccessMessage('Structure créée avec succès');
                     setEditingStructure(null);
+                    setFormErrors(null);
                   })
-                  .catch(() => {});
+                  .catch((error) => {
+                    if (error.errors) {
+                      setFormErrors(error.errors);
+                    }
+                  });
               }
             }}
-            onCancel={() => setEditingStructure(null)}
+            onCancel={() => {
+              setEditingStructure(null);
+              setFormErrors(null);
+            }}
           />
         </DialogContent>
       </Dialog>
@@ -202,9 +218,9 @@ const Structures = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Code</TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Nom</TableCell>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Type</TableCell>
+                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Diminutif</TableCell>
+                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Adresse</TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }} align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -234,16 +250,20 @@ const Structures = () => {
                     sx={{ cursor: 'pointer' }}
                   >
                     <TableCell>
-                      <Chip label={structure.code} color="primary" size="small" />
-                    </TableCell>
-                    <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <BusinessIcon color="action" />
-                        <Typography>{structure.nom}</Typography>
+                        <Typography fontWeight={500}>{structure.nom}</Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Chip label={structure.type} variant="outlined" size="small" />
+                      {structure.diminutif ? (
+                        <Chip label={structure.diminutif} color="primary" size="small" />
+                      ) : (
+                        <Typography color="text.secondary" fontSize="0.875rem">-</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">{structure.adresse}</Typography>
                     </TableCell>
                     <TableCell align="right">
                       <Tooltip title="Modifier">

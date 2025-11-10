@@ -44,7 +44,10 @@ export const createBanque = createAsyncThunk(
       const response = await api.post('/banques', banqueData);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Une erreur est survenue');
+      return rejectWithValue({
+        message: error.response?.data?.message || 'Une erreur est survenue',
+        errors: error.response?.data?.errors || null
+      });
     }
   }
 );
@@ -56,7 +59,10 @@ export const updateBanque = createAsyncThunk(
       const response = await api.put(`/banques/${id}`, banqueData);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Une erreur est survenue');
+      return rejectWithValue({
+        message: error.response?.data?.message || 'Une erreur est survenue',
+        errors: error.response?.data?.errors || null
+      });
     }
   }
 );

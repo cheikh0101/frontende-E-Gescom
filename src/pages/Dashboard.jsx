@@ -51,7 +51,7 @@ const Dashboard = () => {
 
   // Calculs des statistiques
   const contratsActifs = contrats.filter(c => 
-    c.state_contrat?.libelle?.toLowerCase().includes('actif')
+    c.state_contrat?.nom?.toLowerCase().includes('actif')
   ).length;
 
   const contratsExpirantBientot = contrats.filter(c => {
@@ -251,9 +251,9 @@ const Dashboard = () => {
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={contrat.state_contrat?.libelle || 'N/A'}
+                            label={contrat.state_contrat?.nom || 'N/A'}
                             size="small"
-                            color={contrat.state_contrat?.libelle?.toLowerCase().includes('actif') ? 'success' : 'default'}
+                            color={contrat.state_contrat?.nom?.toLowerCase().includes('actif') ? 'success' : 'default'}
                           />
                         </TableCell>
                       </TableRow>

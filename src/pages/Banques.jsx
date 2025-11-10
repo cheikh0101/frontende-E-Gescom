@@ -48,6 +48,7 @@ const Banques = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [formErrors, setFormErrors] = useState(null);
 
   useEffect(() => {
     dispatch(fetchBanques());
@@ -136,26 +137,41 @@ const Banques = () => {
         <DialogContent sx={{ mt: 2 }}>
           <BanqueForm
             banque={editingBanque}
+            errors={formErrors}
             onSubmit={(data) => {
+              setFormErrors(null);
               if (editingBanque?.id) {
                 dispatch(updateBanque({ id: editingBanque.id, banqueData: data }))
                   .unwrap()
                   .then(() => {
                     setSuccessMessage('Banque mise à jour avec succès');
                     setEditingBanque(null);
+                    setFormErrors(null);
                   })
-                  .catch(() => {});
+                  .catch((error) => {
+                    if (error.errors) {
+                      setFormErrors(error.errors);
+                    }
+                  });
               } else {
                 dispatch(createBanque(data))
                   .unwrap()
                   .then(() => {
                     setSuccessMessage('Banque créée avec succès');
                     setEditingBanque(null);
+                    setFormErrors(null);
                   })
-                  .catch(() => {});
+                  .catch((error) => {
+                    if (error.errors) {
+                      setFormErrors(error.errors);
+                    }
+                  });
               }
             }}
-            onCancel={() => setEditingBanque(null)}
+            onCancel={() => {
+              setEditingBanque(null);
+              setFormErrors(null);
+            }}
           />
         </DialogContent>
       </Dialog>

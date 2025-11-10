@@ -4,8 +4,10 @@ import api from '../../services/api';
 // Types
 interface StateContrat {
   id: number;
-  libelle: string;
-  description?: string;
+  code: string;
+  nom: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface StateContratState {
@@ -42,7 +44,7 @@ export const createStateContrat = createAsyncThunk(
       const response = await api.post('/state-contrats', data);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Erreur lors de la création de l\'état de contrat');
+      return rejectWithValue(error.response?.data?.errors || error.response?.data?.message || 'Erreur lors de la création de l\'état de contrat');
     }
   }
 );
@@ -54,7 +56,7 @@ export const updateStateContrat = createAsyncThunk(
       const response = await api.put(`/state-contrats/${id}`, data);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Erreur lors de la mise à jour de l\'état de contrat');
+      return rejectWithValue(error.response?.data?.errors || error.response?.data?.message || 'Erreur lors de la mise à jour de l\'état de contrat');
     }
   }
 );

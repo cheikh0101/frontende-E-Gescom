@@ -67,7 +67,7 @@ const Contrats = () => {
     contrat.structure?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const contratsActifs = contrats.filter(c => c.state_contrat?.libelle?.toLowerCase().includes('actif'));
+  const contratsActifs = contrats.filter(c => c.state_contrat?.nom?.toLowerCase().includes('actif'));
 
   return (
     <Box sx={{ p: 3 }}>
@@ -282,9 +282,9 @@ const Contrats = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={contrat.state_contrat?.libelle || 'Non défini'}
+                        label={contrat.state_contrat?.nom || 'Non défini'}
                         size="small"
-                        color={contrat.state_contrat?.libelle?.toLowerCase().includes('actif') ? 'success' : 'default'}
+                        color={contrat.state_contrat?.nom?.toLowerCase().includes('actif') ? 'success' : 'default'}
                       />
                     </TableCell>
                     <TableCell align="right">

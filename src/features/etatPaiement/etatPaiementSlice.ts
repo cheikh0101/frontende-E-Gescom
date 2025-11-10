@@ -4,11 +4,13 @@ import api from '../../services/api';
 // Types
 interface EtatPaiement {
   id: number;
-  montant: number;
-  date_paiement: string;
-  commentaire?: string;
-  contrat_id: number;
-  state_etat_paiement_id: number;
+  periode: string;
+  agent_id: number;
+  type: string;
+  montant_total: number;
+  montant_net: number;
+  montant_retenu: number;
+  fichier?: string;
 }
 
 interface EtatPaiementState {

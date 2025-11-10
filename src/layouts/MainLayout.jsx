@@ -28,6 +28,8 @@ import {
   Business as BusinessIcon,
   AccountBalance as BankIcon,
   Payment as PaymentIcon,
+  Label as LabelIcon,
+  MonetizationOn as MoneyIcon,
   AccountCircle,
   Logout
 } from '@mui/icons-material';
@@ -38,6 +40,8 @@ const menuItems = [
   { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
   { text: 'Agents', path: '/agents', icon: <PeopleIcon /> },
   { text: 'Contrats', path: '/contrats', icon: <DescriptionIcon /> },
+  { text: 'États de Contrat', path: '/state-contrats', icon: <LabelIcon /> },
+  { text: 'États de Paiement', path: '/state-etat-paiements', icon: <MoneyIcon /> },
   { text: 'Structures', path: '/structures', icon: <BusinessIcon /> },
   { text: 'Banques', path: '/banques', icon: <BankIcon /> },
   { text: 'États Paiements', path: '/paiements', icon: <PaymentIcon /> },

@@ -49,7 +49,7 @@ export const createContrat = createAsyncThunk(
       const response = await api.post('/contrats', contratData);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Une erreur est survenue');
+      return rejectWithValue(error.response?.data?.errors || error.response?.data?.message || 'Une erreur est survenue');
     }
   }
 );
@@ -61,7 +61,7 @@ export const updateContrat = createAsyncThunk(
       const response = await api.put(`/contrats/${id}`, contratData);
       return response.data.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Une erreur est survenue');
+      return rejectWithValue(error.response?.data?.errors || error.response?.data?.message || 'Une erreur est survenue');
     }
   }
 );

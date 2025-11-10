@@ -8,6 +8,7 @@ import banqueReducer from '../features/banques/banqueSlice';
 import stateContratReducer from '../features/stateContrat/stateContratSlice';
 import stateEtatPaiementReducer from '../features/stateEtatPaiement/stateEtatPaiementSlice';
 import etatPaiementReducer from '../features/etatPaiement/etatPaiementSlice';
+import auditLogReducer from '../features/auditLogs/auditLogSlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     stateContrats: stateContratReducer,
     stateEtatPaiements: stateEtatPaiementReducer,
     etatPaiements: etatPaiementReducer,
+    auditLogs: auditLogReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

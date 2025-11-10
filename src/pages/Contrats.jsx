@@ -10,6 +10,7 @@ import {
 import { fetchAgents } from '../features/agents/agentSlice';
 import { fetchStructures } from '../features/structures/structureSlice';
 import { fetchStateContrats } from '../features/stateContrat/stateContratSlice';
+import { fetchAuditLogs, clearAuditLogs } from '../features/auditLogs/auditLogSlice';
 import {
   Box,
   Typography,
@@ -40,19 +41,119 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon,
   Description as DescriptionIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Visibility as VisibilityIcon,
+  History as HistoryIcon,
+  FindInPage as FindInPageIcon
 } from '@mui/icons-material';
 import ContratForm from '../components/ContratForm';
+import AuditHistoryDialog from '../components/contrats/AuditHistoryDialog';
 import dayjs from 'dayjs';
 
 const Contrats = () => {
   const dispatch = useAppDispatch();
   const { contrats, isLoading, error, selectedContrat } = useAppSelector((state) => state.contrats);
-  const { stateContrats } = useAppSelector((state) => state.stateContrats);
+  const { logs: auditLogs } = useAppSelector((state) => state.auditLogs);
+  // structures, agents et stateContrats chargés pour ContratForm
+  useAppSelector((state) => state.structures);
+  useAppSelector((state) => state.agents);
+  useAppSelector((state) => state.stateContrats);
   const [editingContrat, setEditingContrat] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [auditDialogOpen, setAuditDialogOpen] = useState(false);
+  const [stateHistory, setStateHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [formErrors, setFormErrors] = useState(null);
+
+  useEffect(() => {
+    dispatch(fetchContrats());
+    dispatch(fetchStateContrats());
+    dispatch(fetchAgents());
+    dispatch(fetchStructures());
+  }, [dispatch]);
+
+  const handleCreate = async (data) => {
+    try {
+      await dispatch(createContrat(data)).unwrap();
+      setEditingContrat(null);
+      setSuccessMessage('Contrat créé avec succès');
+      setFormErrors(null);
+      setTimeout(() => setSuccessMessage(''), 3000);
+      // Recharger la liste pour s'assurer que toutes les relations sont à jour
+      dispatch(fetchContrats());
+    } catch (err) {
+      setFormErrors(err);
+    }
+  };
+
+  const handleUpdate = async (data) => {
+    try {
+      await dispatch(updateContrat({ id: editingContrat.id, contratData: data })).unwrap();
+      setEditingContrat(null);
+      setSuccessMessage('Contrat modifié avec succès');
+      setFormErrors(null);
+      setTimeout(() => setSuccessMessage(''), 3000);
+      // Recharger la liste pour s'assurer que toutes les relations sont à jour
+      dispatch(fetchContrats());
+    } catch (err) {
+      setFormErrors(err);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await dispatch(deleteContrat(selectedContrat.id)).unwrap();
+      setDeleteDialogOpen(false);
+      dispatch(setSelectedContrat(null));
+      setSuccessMessage('Contrat supprimé avec succès');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      setDeleteDialogOpen(false);
+      alert(err || 'Erreur lors de la suppression');
+    }
+  };
+
+  const openDeleteDialog = (contrat) => {
+    dispatch(setSelectedContrat(contrat));
+    setDeleteDialogOpen(true);
+  };
+
+  const openHistoryDialog = async (contrat) => {
+    dispatch(setSelectedContrat(contrat));
+    setHistoryDialogOpen(true);
+    setLoadingHistory(true);
+    
+    try {
+      const response = await fetch(`http://localhost:8000/api/contrats/${contrat.id}/state-history`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      console.log('Historique reçu:', data);
+      if (data.success && data.data) {
+        setStateHistory(data.data);
+      } else {
+        setStateHistory([]);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'historique:', error);
+      setStateHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const openAuditDialog = async (contrat) => {
+    dispatch(setSelectedContrat(contrat));
+    setAuditDialogOpen(true);
+    dispatch(fetchAuditLogs({ table: 'contrats', recordId: contrat.id }));
+  };
 
   useEffect(() => {
     dispatch(fetchContrats());
@@ -62,12 +163,13 @@ const Contrats = () => {
   }, [dispatch]);
 
   const filteredContrats = contrats.filter(contrat =>
-    contrat.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contrat.agent?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contrat.agent?.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contrat.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contrat.structure?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const contratsActifs = contrats.filter(c => c.state_contrat?.nom?.toLowerCase().includes('actif'));
+  const contratsActifs = contrats.filter(c => c.current_state?.code === 'EN_COURS');
 
   return (
     <Box sx={{ p: 3 }}>
@@ -126,7 +228,10 @@ const Contrats = () => {
 
       <Dialog
         open={Boolean(editingContrat)}
-        onClose={() => setEditingContrat(null)}
+        onClose={() => {
+          setEditingContrat(null);
+          setFormErrors(null);
+        }}
         maxWidth="md"
         fullWidth
         PaperProps={{ sx: { borderRadius: 2 } }}
@@ -138,26 +243,12 @@ const Contrats = () => {
         <DialogContent sx={{ mt: 2 }}>
           <ContratForm
             contrat={editingContrat}
-            onSubmit={(data) => {
-              if (editingContrat?.id) {
-                dispatch(updateContrat({ id: editingContrat.id, ...data }))
-                  .unwrap()
-                  .then(() => {
-                    setSuccessMessage('Contrat mis à jour avec succès');
-                    setEditingContrat(null);
-                  })
-                  .catch(() => {});
-              } else {
-                dispatch(createContrat(data))
-                  .unwrap()
-                  .then(() => {
-                    setSuccessMessage('Contrat créé avec succès');
-                    setEditingContrat(null);
-                  })
-                  .catch(() => {});
-              }
+            onSubmit={editingContrat?.id ? handleUpdate : handleCreate}
+            onCancel={() => {
+              setEditingContrat(null);
+              setFormErrors(null);
             }}
-            onCancel={() => setEditingContrat(null)}
+            errors={formErrors}
           />
         </DialogContent>
       </Dialog>
@@ -180,17 +271,7 @@ const Contrats = () => {
             Annuler
           </Button>
           <Button
-            onClick={() => {
-              if (selectedContrat) {
-                dispatch(deleteContrat(selectedContrat.id))
-                  .unwrap()
-                  .then(() => {
-                    setSuccessMessage('Contrat supprimé avec succès');
-                    setDeleteDialogOpen(false);
-                  })
-                  .catch(() => {});
-              }
-            }}
+            onClick={handleDelete}
             color="error"
             variant="contained"
           >
@@ -199,10 +280,274 @@ const Contrats = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Dialog de visualisation */}
+      <Dialog
+        open={viewDialogOpen}
+        onClose={() => setViewDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
+      >
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <VisibilityIcon />
+          Détails du contrat
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {selectedContrat && (
+            <Box sx={{ display: 'grid', gap: 2 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  Type de contrat
+                </Typography>
+                <Typography variant="body1" sx={{ mt: 0.5 }}>
+                  {selectedContrat.type || 'N/A'}
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    Agent
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5 }}>
+                    {selectedContrat.agent ? `${selectedContrat.agent.prenom} ${selectedContrat.agent.nom}` : 'N/A'}
+                  </Typography>
+                  {selectedContrat.agent?.matricule && (
+                    <Typography variant="caption" color="text.secondary">
+                      Matricule: {selectedContrat.agent.matricule}
+                    </Typography>
+                  )}
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    Structure
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5 }}>
+                    {selectedContrat.structure?.nom || 'N/A'}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    Date de début
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5 }}>
+                    {selectedContrat.date_debut ? dayjs(selectedContrat.date_debut).format('DD/MM/YYYY') : 'N/A'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    Date de fin
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5 }}>
+                    {selectedContrat.date_fin ? dayjs(selectedContrat.date_fin).format('DD/MM/YYYY') : 'N/A'}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    Montant total
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 600, color: 'primary.main' }}>
+                    {selectedContrat.montant_total ? `${selectedContrat.montant_total.toLocaleString()} FCFA` : 'N/A'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    Montant net
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 600, color: 'success.main' }}>
+                    {selectedContrat.montant_net ? `${selectedContrat.montant_net.toLocaleString()} FCFA` : 'N/A'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    Montant retenu
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 600, color: 'warning.main' }}>
+                    {selectedContrat.montant_retenu ? `${selectedContrat.montant_retenu.toLocaleString()} FCFA` : 'N/A'}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  Fonction
+                </Typography>
+                <Typography variant="body1" sx={{ mt: 0.5 }}>
+                  {selectedContrat.fonction || 'N/A'}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  État du contrat
+                </Typography>
+                <Box sx={{ mt: 0.5 }}>
+                  <Chip
+                    label={selectedContrat.current_state?.nom || 'Non défini'}
+                    color={selectedContrat.current_state?.nom?.toLowerCase().includes('actif') ? 'success' : 'default'}
+                    sx={{ fontWeight: 600 }}
+                  />
+                </Box>
+              </Box>
+
+              {selectedContrat.created_at && (
+                <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Créé le {dayjs(selectedContrat.created_at).format('DD/MM/YYYY à HH:mm')}
+                  </Typography>
+                  {selectedContrat.updated_at && selectedContrat.updated_at !== selectedContrat.created_at && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                      Modifié le {dayjs(selectedContrat.updated_at).format('DD/MM/YYYY à HH:mm')}
+                    </Typography>
+                  )}
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setViewDialogOpen(false)} color="inherit">
+            Fermer
+          </Button>
+          <Button
+            onClick={() => {
+              setViewDialogOpen(false);
+              setEditingContrat(selectedContrat);
+            }}
+            color="primary"
+            variant="contained"
+            startIcon={<EditIcon />}
+          >
+            Modifier
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog Historique des états */}
+      <Dialog
+        open={historyDialogOpen}
+        onClose={() => setHistoryDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
+      >
+        <DialogTitle sx={{ bgcolor: 'info.main', color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <HistoryIcon />
+          Historique des états du contrat
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {loadingHistory ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : stateHistory.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <HistoryIcon sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Aucun historique d'état disponible
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                L'historique sera créé lors du premier changement d'état de ce contrat.
+              </Typography>
+              {selectedContrat?.current_state && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    État actuel :
+                  </Typography>
+                  <Box sx={{ mt: 1 }}>
+                    <Chip
+                      label={selectedContrat.current_state.nom}
+                      color="primary"
+                      sx={{ fontWeight: 600 }}
+                    />
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {stateHistory.map((item, index) => (
+                <Paper
+                  key={item.id}
+                  elevation={2}
+                  sx={{
+                    p: 2,
+                    borderLeft: 4,
+                    borderColor: index === 0 ? 'primary.main' : 'grey.300'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Box>
+                      <Chip
+                        label={item.state_name}
+                        color={index === 0 ? 'primary' : 'default'}
+                        size="small"
+                        sx={{ fontWeight: 600 }}
+                      />
+                      {index === 0 && (
+                        <Chip
+                          label="État actuel"
+                          color="success"
+                          size="small"
+                          sx={{ ml: 1, fontWeight: 600 }}
+                        />
+                      )}
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {item.date}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        Modifié par
+                      </Typography>
+                      <Typography variant="body2">
+                        {item.changed_by}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        Date
+                      </Typography>
+                      <Typography variant="body2">
+                        {dayjs(item.changed_at).format('DD/MM/YYYY à HH:mm')}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHistoryDialogOpen(false)} color="inherit">
+            Fermer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog Audit complet */}
+      <AuditHistoryDialog
+        open={auditDialogOpen}
+        onClose={() => {
+          setAuditDialogOpen(false);
+          dispatch(clearAuditLogs());
+        }}
+        auditLogs={auditLogs}
+        contrat={selectedContrat}
+      />
+
       <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
         <TextField
           fullWidth
-          placeholder="Rechercher par numéro, agent ou structure..."
+          placeholder="Rechercher par agent, type ou structure..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{
@@ -220,8 +565,8 @@ const Contrats = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Numéro</TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Agent</TableCell>
+                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Type</TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Structure</TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Date Début</TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Date Fin</TableCell>
@@ -255,16 +600,16 @@ const Contrats = () => {
                     sx={{ cursor: 'pointer' }}
                   >
                     <TableCell>
-                      <Chip label={contrat.numero} color="primary" size="small" />
-                    </TableCell>
-                    <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {contrat.agent?.nom} {contrat.agent?.prenom}
+                        {contrat.agent?.prenom} {contrat.agent?.nom}
                       </Typography>
                     </TableCell>
                     <TableCell>
+                      <Chip label={contrat.type} color="primary" size="small" variant="outlined" />
+                    </TableCell>
+                    <TableCell>
                       <Chip
-                        label={contrat.structure?.nom || 'Non assigné'}
+                        label={contrat.structure?.diminutif || contrat.structure?.nom || 'Non assigné'}
                         variant="outlined"
                         size="small"
                         color="secondary"
@@ -282,12 +627,49 @@ const Contrats = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={contrat.state_contrat?.nom || 'Non défini'}
+                        label={contrat.current_state?.nom || 'Non défini'}
                         size="small"
-                        color={contrat.state_contrat?.nom?.toLowerCase().includes('actif') ? 'success' : 'default'}
+                        color={contrat.current_state?.nom?.toLowerCase().includes('actif') ? 'success' : 'default'}
                       />
                     </TableCell>
                     <TableCell align="right">
+                      <Tooltip title="Voir détails">
+                        <IconButton
+                          size="small"
+                          color="info"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            dispatch(setSelectedContrat(contrat));
+                            setViewDialogOpen(true);
+                          }}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Historique des états">
+                        <IconButton
+                          size="small"
+                          color="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openHistoryDialog(contrat);
+                          }}
+                        >
+                          <HistoryIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Audit complet">
+                        <IconButton
+                          size="small"
+                          color="warning"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openAuditDialog(contrat);
+                          }}
+                        >
+                          <FindInPageIcon />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title="Modifier">
                         <IconButton
                           size="small"
@@ -306,8 +688,7 @@ const Contrats = () => {
                           color="error"
                           onClick={(e) => {
                             e.stopPropagation();
-                            dispatch(setSelectedContrat(contrat));
-                            setDeleteDialogOpen(true);
+                            openDeleteDialog(contrat);
                           }}
                         >
                           <DeleteIcon />

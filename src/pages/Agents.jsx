@@ -402,7 +402,7 @@ const Agents = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={agent.structure?.nom || 'Non assigné'}
+                        label={agent.structure?.diminutif || agent.structure?.nom || 'Non assigné'}
                         variant="outlined"
                         size="small"
                         color="secondary"

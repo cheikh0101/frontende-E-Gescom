@@ -88,6 +88,18 @@ export const deleteEtatPaiement = createAsyncThunk(
   }
 );
 
+export const changeEtatPaiementState = createAsyncThunk(
+  'etatPaiements/changeEtatPaiementState',
+  async ({ id, state_etat_paiement_id }: { id: number; state_etat_paiement_id: number }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/etat-paiements/${id}/change-state`, { state_etat_paiement_id });
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Erreur lors du changement d\'état du paiement');
+    }
+  }
+);
+
 // Slice
 const etatPaiementSlice = createSlice({
   name: 'etatPaiements',
@@ -170,6 +182,22 @@ const etatPaiementSlice = createSlice({
         state.etatPaiements = state.etatPaiements.filter(ep => ep.id !== action.payload);
       })
       .addCase(deleteEtatPaiement.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Change EtatPaiement State
+      .addCase(changeEtatPaiementState.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(changeEtatPaiementState.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const index = state.etatPaiements.findIndex(ep => ep.id === action.payload.id);
+        if (index !== -1) {
+          state.etatPaiements[index] = action.payload;
+        }
+      })
+      .addCase(changeEtatPaiementState.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Grid,
   TextField,
   Button,
   Box,
@@ -54,99 +53,92 @@ const EtatPaiementForm = ({ etatPaiement, onSubmit, onCancel }) => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Période"
-            name="periode"
-            value={formData.periode}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <TextField
+          fullWidth
+          label="Période"
+          name="periode"
+          value={formData.periode}
+          onChange={handleChange}
+          required
+          helperText="Ex: Janvier 2025, Q1 2025, etc."
+        />
+        
+        <FormControl fullWidth required>
+          <InputLabel>Agent</InputLabel>
+          <Select
+            name="agent_id"
+            value={formData.agent_id}
             onChange={handleChange}
-            required
-            helperText="Ex: Janvier 2025, Q1 2025, etc."
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth required>
-            <InputLabel>Agent</InputLabel>
-            <Select
-              name="agent_id"
-              value={formData.agent_id}
-              onChange={handleChange}
-              label="Agent"
-            >
-              {agents.map((agent) => (
-                <MenuItem key={agent.id} value={agent.id}>
-                  {agent.prenom} {agent.nom}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Type"
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            required
-            helperText="Ex: Salaire, Prime, Indemnité, etc."
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Montant total"
-            name="montant_total"
-            type="number"
-            value={formData.montant_total}
-            onChange={handleChange}
-            required
-            InputProps={{
-              startAdornment: <InputAdornment position="start">FCFA</InputAdornment>,
-            }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Montant net"
-            name="montant_net"
-            type="number"
-            value={formData.montant_net}
-            onChange={handleChange}
-            required
-            InputProps={{
-              startAdornment: <InputAdornment position="start">FCFA</InputAdornment>,
-            }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Montant retenu"
-            name="montant_retenu"
-            type="number"
-            value={formData.montant_retenu}
-            onChange={handleChange}
-            required
-            InputProps={{
-              startAdornment: <InputAdornment position="start">FCFA</InputAdornment>,
-            }}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Fichier (URL)"
-            name="fichier"
-            value={formData.fichier}
-            onChange={handleChange}
-            helperText="URL du fichier de l'état de paiement (optionnel)"
-          />
-        </Grid>
-      </Grid>
+            label="Agent"
+          >
+            {agents.map((agent) => (
+              <MenuItem key={agent.id} value={agent.id}>
+                {agent.prenom} {agent.nom}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        
+        <TextField
+          fullWidth
+          label="Type"
+          name="type"
+          value={formData.type}
+          onChange={handleChange}
+          required
+          helperText="Ex: Salaire, Prime, Indemnité, etc."
+        />
+        
+        <TextField
+          fullWidth
+          label="Montant total"
+          name="montant_total"
+          type="number"
+          value={formData.montant_total}
+          onChange={handleChange}
+          required
+          InputProps={{
+            startAdornment: <InputAdornment position="start">FCFA</InputAdornment>,
+          }}
+        />
+        
+        <TextField
+          fullWidth
+          label="Montant net"
+          name="montant_net"
+          type="number"
+          value={formData.montant_net}
+          onChange={handleChange}
+          required
+          InputProps={{
+            startAdornment: <InputAdornment position="start">FCFA</InputAdornment>,
+          }}
+        />
+        
+        <TextField
+          fullWidth
+          label="Montant retenu"
+          name="montant_retenu"
+          type="number"
+          value={formData.montant_retenu}
+          onChange={handleChange}
+          required
+          InputProps={{
+            startAdornment: <InputAdornment position="start">FCFA</InputAdornment>,
+          }}
+        />
+        
+        <TextField
+          fullWidth
+          label="Fichier (URL)"
+          name="fichier"
+          value={formData.fichier}
+          onChange={handleChange}
+          helperText="URL du fichier de l'état de paiement (optionnel)"
+        />
+      </Box>
+      
       <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
         <Button onClick={onCancel} color="inherit">
           Annuler

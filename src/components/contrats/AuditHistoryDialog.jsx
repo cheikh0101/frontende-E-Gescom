@@ -54,23 +54,30 @@ const AuditHistoryDialog = ({ open, onClose, auditLogs, contrat }) => {
   };
 
   const formatValue = (value, field) => {
-    if (value === null || value === undefined) return 'N/A';
+    if (value === null || value === undefined || value === '') return 'N/A';
     
     // Format monetary values
     if (field?.includes('montant')) {
       return new Intl.NumberFormat('fr-FR', {
         style: 'currency',
         currency: 'XOF',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
       }).format(value);
     }
     
     // Format dates
-    if (field?.includes('date')) {
+    if (field?.includes('date') && field !== 'updated_at' && field !== 'created_at') {
       try {
         return dayjs(value).format('DD/MM/YYYY');
       } catch {
         return value;
       }
+    }
+    
+    // Format IDs - afficher juste l'ID sans plus d'info (on ne peut pas résoudre les relations ici)
+    if (field === 'agent_id' || field === 'state_contrat_id') {
+      return `ID: ${value}`;
     }
     
     return value;
@@ -90,32 +97,44 @@ const AuditHistoryDialog = ({ open, onClose, auditLogs, contrat }) => {
 
     // Filter out timestamps and fields that didn't change
     const changedFields = Array.from(allFields).filter(field => {
+      // Ignorer les timestamps système
       if (field === 'updated_at' || field === 'created_at') return false;
-      return oldValues[field] !== newValues[field];
+      // Ignorer les champs techniques
+      if (field === 'id') return false;
+      // Ne garder que les champs qui ont vraiment changé
+      return String(oldValues[field]) !== String(newValues[field]);
     });
 
-    if (changedFields.length === 0) return null;
+    if (changedFields.length === 0) {
+      return (
+        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+          <Typography variant="body2" color="text.secondary">
+            Aucun changement détecté
+          </Typography>
+        </Paper>
+      );
+    }
 
     return (
       <TableContainer component={Paper} variant="outlined" sx={{ mt: 1 }}>
         <Table size="small">
           <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>Champ</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Ancienne valeur</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Nouvelle valeur</TableCell>
+            <TableRow sx={{ bgcolor: 'grey.100' }}>
+              <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Champ modifié</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>Ancienne valeur</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>Nouvelle valeur</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {changedFields.map((field, idx) => (
               <TableRow key={idx} hover>
-                <TableCell sx={{ fontWeight: 500 }}>
+                <TableCell sx={{ fontWeight: 500, color: 'primary.main' }}>
                   {formatFieldName(field)}
                 </TableCell>
-                <TableCell sx={{ color: 'text.secondary' }}>
+                <TableCell sx={{ color: 'text.secondary', textDecoration: 'line-through' }}>
                   {formatValue(oldValues[field], field)}
                 </TableCell>
-                <TableCell sx={{ color: 'primary.main', fontWeight: 500 }}>
+                <TableCell sx={{ color: 'success.main', fontWeight: 600 }}>
                   {formatValue(newValues[field], field)}
                 </TableCell>
               </TableRow>
@@ -163,8 +182,13 @@ const AuditHistoryDialog = ({ open, onClose, auditLogs, contrat }) => {
                   <Typography variant="body2" color="text.secondary">
                     par{' '}
                     <strong>
-                      {log.user?.nom} {log.user?.prenom}
+                      {log.user?.name || 'Utilisateur inconnu'}
                     </strong>
+                    {log.user?.email && (
+                      <span style={{ fontWeight: 'normal' }}>
+                        {' '}({log.user.email})
+                      </span>
+                    )}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {log.created_at && dayjs(log.created_at).format('DD/MM/YYYY à HH:mm')}
@@ -173,23 +197,34 @@ const AuditHistoryDialog = ({ open, onClose, auditLogs, contrat }) => {
 
                 {log.action?.toLowerCase() === 'created' ||
                 log.action?.toLowerCase() === 'création' ? (
-                  <Paper variant="outlined" sx={{ p: 2, bgcolor: 'rgba(46, 125, 50, 0.1)' }}>
-                    <Typography variant="body2" sx={{ color: 'success.dark' }}>
-                      Contrat créé
-                    </Typography>
-                    {log.nouvelles_valeurs && (
-                      <Box mt={1}>
-                        <Typography variant="caption" color="text.secondary">
-                          Valeurs initiales enregistrées
+                  <Paper variant="outlined" sx={{ p: 2, bgcolor: 'rgba(46, 125, 50, 0.08)' }}>
+                    <Box display="flex" alignItems="center" gap={1} mb={1}>
+                      <Typography variant="body2" sx={{ color: 'success.dark', fontWeight: 600 }}>
+                        ✓ Contrat créé avec succès
+                      </Typography>
+                    </Box>
+                    {log.nouvelles_valeurs && Object.keys(log.nouvelles_valeurs).length > 0 && (
+                      <Box mt={2}>
+                        <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary', mb: 1, display: 'block' }}>
+                          Valeurs initiales :
                         </Typography>
+                        <Box sx={{ pl: 2 }}>
+                          {Object.entries(log.nouvelles_valeurs)
+                            .filter(([key]) => !['id', 'created_at', 'updated_at'].includes(key))
+                            .map(([key, value], idx) => (
+                              <Typography key={idx} variant="caption" component="div" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                                • <strong>{formatFieldName(key)}</strong>: {formatValue(value, key)}
+                              </Typography>
+                            ))}
+                        </Box>
                       </Box>
                     )}
                   </Paper>
                 ) : log.action?.toLowerCase() === 'deleted' ||
                   log.action?.toLowerCase() === 'suppression' ? (
-                  <Paper variant="outlined" sx={{ p: 2, bgcolor: 'rgba(211, 47, 47, 0.1)' }}>
-                    <Typography variant="body2" sx={{ color: 'error.dark' }}>
-                      Contrat supprimé
+                  <Paper variant="outlined" sx={{ p: 2, bgcolor: 'rgba(211, 47, 47, 0.08)' }}>
+                    <Typography variant="body2" sx={{ color: 'error.dark', fontWeight: 600 }}>
+                      ✗ Contrat supprimé définitivement
                     </Typography>
                   </Paper>
                 ) : (

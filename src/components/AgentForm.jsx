@@ -23,7 +23,9 @@ const AgentForm = ({
     numero_cni: '',
     adresse: '',
     structure_id: '',
-    banque_id: ''
+    banque_id: '',
+    numero_compte: '',
+    iban: ''
   });
   
   const { structures = [] } = useAppSelector((state) => state.structures || { structures: [] });
@@ -43,7 +45,9 @@ const AgentForm = ({
         numero_cni: agent.numero_cni || '',
         adresse: agent.adresse || '',
         structure_id: agent.structure_id || '',
-        banque_id: agent.banque_id || ''
+        banque_id: agent.banque_id || '',
+        numero_compte: agent.numero_compte || '',
+        iban: agent.iban || ''
       });
     } else {
       setFormData({
@@ -58,7 +62,9 @@ const AgentForm = ({
         numero_cni: '',
         adresse: '',
         structure_id: '',
-        banque_id: ''
+        banque_id: '',
+        numero_compte: '',
+        iban: ''
       });
     }
   }, [agent]);
@@ -91,6 +97,8 @@ const AgentForm = ({
     // Supprimer les champs vides optionnels
     if (!cleanedData.telephone) delete cleanedData.telephone;
     if (!cleanedData.matricule) delete cleanedData.matricule;
+    if (!cleanedData.numero_compte) delete cleanedData.numero_compte;
+    if (!cleanedData.iban) delete cleanedData.iban;
     
     // Convertir structure_id et banque_id en nombres
     if (cleanedData.structure_id) {
@@ -251,6 +259,26 @@ const AgentForm = ({
             ))}
           </Select>
         </FormControl>
+        <TextField
+          name="numero_compte"
+          label="Numéro de compte"
+          value={formData.numero_compte}
+          onChange={handleChange}
+          fullWidth
+          placeholder="Ex: 1234567890"
+          error={!!(errors?.numero_compte)}
+          helperText={errors?.numero_compte?.[0] || 'Numéro de compte bancaire (optionnel)'}
+        />
+        <TextField
+          name="iban"
+          label="IBAN"
+          value={formData.iban}
+          onChange={handleChange}
+          fullWidth
+          placeholder="Ex: MR1300012000010000000123456"
+          error={!!(errors?.iban)}
+          helperText={errors?.iban?.[0] || 'Code IBAN international (optionnel)'}
+        />
       </Box>
         <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
           <Button 

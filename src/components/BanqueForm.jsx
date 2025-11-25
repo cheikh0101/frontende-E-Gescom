@@ -12,9 +12,8 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
   const [formData, setFormData] = useState({
     code: '',
     nom: '',
-    guichet: '',
-    numero_compte: '',
-    iban: ''
+    diminutif: '',
+    adresse: ''
   });
 
   useEffect(() => {
@@ -22,9 +21,8 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
       setFormData({
         code: banque.code || '',
         nom: banque.nom || '',
-        guichet: banque.guichet || '',
-        numero_compte: banque.numero_compte || '',
-        iban: banque.iban || ''
+        diminutif: banque.diminutif || '',
+        adresse: banque.adresse || ''
       });
     }
   }, [banque]);
@@ -39,7 +37,7 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
-    setFormData({ code: '', nom: '', guichet: '', numero_compte: '', iban: '' });
+    setFormData({ code: '', nom: '', diminutif: '', adresse: '' });
   };
 
   return (
@@ -91,42 +89,29 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Guichet"
-            name="guichet"
-            value={formData.guichet}
+            label="Diminutif"
+            name="diminutif"
+            value={formData.diminutif}
             onChange={handleChange}
             variant="outlined"
-            placeholder="Ex: 12345"
-            error={!!(errors?.guichet)}
-            helperText={errors?.guichet?.[0] || "Code guichet (optionnel)"}
+            placeholder="Ex: BCM, SGMR, BNM..."
+            error={!!(errors?.diminutif)}
+            helperText={errors?.diminutif?.[0] || "Abréviation de la banque (optionnel)"}
           />
         </Grid>
         <Grid item xs={12}>
           <TextField
             fullWidth
-            required
-            label="Numéro de compte"
-            name="numero_compte"
-            value={formData.numero_compte}
+            multiline
+            rows={3}
+            label="Adresse"
+            name="adresse"
+            value={formData.adresse}
             onChange={handleChange}
             variant="outlined"
-            placeholder="Ex: 1234567890"
-            error={!!(errors?.numero_compte)}
-            helperText={errors?.numero_compte?.[0] || "Numéro de compte bancaire"}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            required
-            label="IBAN"
-            name="iban"
-            value={formData.iban}
-            onChange={handleChange}
-            variant="outlined"
-            placeholder="Ex: FR7612345678901234567890123"
-            error={!!(errors?.iban)}
-            helperText={errors?.iban?.[0] || "Code IBAN international"}
+            placeholder="Ex: Avenue Gamal Abdel Nasser, Nouakchott..."
+            error={!!(errors?.adresse)}
+            helperText={errors?.adresse?.[0] || "Adresse complète de la banque (optionnel)"}
           />
         </Grid>
         <Grid item xs={12}>

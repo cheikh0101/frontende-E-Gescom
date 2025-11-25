@@ -28,23 +28,43 @@ import {
   Business as BusinessIcon,
   AccountBalance as BankIcon,
   Payment as PaymentIcon,
-  Label as LabelIcon,
-  MonetizationOn as MoneyIcon,
+  Settings as SettingsIcon,
+  ExpandLess,
+  ExpandMore,
   AccountCircle,
-  Logout
+  Logout,
+  Work as WorkIcon,
+  Receipt as ReceiptIcon
 } from '@mui/icons-material';
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 
-const menuItems = [
-  { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
-  { text: 'Agents', path: '/agents', icon: <PeopleIcon /> },
-  { text: 'Contrats', path: '/contrats', icon: <DescriptionIcon /> },
-  { text: 'États de Contrat', path: '/state-contrats', icon: <LabelIcon /> },
-  { text: 'États de Paiement', path: '/state-etat-paiements', icon: <MoneyIcon /> },
-  { text: 'Structures', path: '/structures', icon: <BusinessIcon /> },
-  { text: 'Banques', path: '/banques', icon: <BankIcon /> },
-  { text: 'États Paiements', path: '/paiements', icon: <PaymentIcon /> },
+const menuSections = [
+  {
+    title: null,
+    items: [
+      { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
+    ]
+  },
+  {
+    title: 'Gestion',
+    items: [
+      { text: 'Contrats', path: '/contrats', icon: <WorkIcon /> },
+      { text: 'États de Paiement', path: '/paiements', icon: <ReceiptIcon /> },
+      { text: 'Suivi Activité', path: '/suivi-activite', icon: <PeopleIcon /> },
+    ]
+  },
+  {
+    title: 'Paramètres',
+    collapsible: true,
+    items: [
+      { text: 'Agents', path: '/agents', icon: <PeopleIcon /> },
+      { text: 'Structures', path: '/structures', icon: <BusinessIcon /> },
+      { text: 'Banques', path: '/banques', icon: <BankIcon /> },
+      { text: 'États de Contrat', path: '/state-contrats', icon: <DescriptionIcon /> },
+      { text: 'États de Paiement', path: '/state-etat-paiements', icon: <PaymentIcon /> },
+    ]
+  }
 ];
 
 const MainLayout = () => {
@@ -53,12 +73,32 @@ const MainLayout = () => {
   const location = useLocation();
   const { user } = useAppSelector((state) => state.auth);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [openSections, setOpenSections] = useState({});
 
   useEffect(() => {
     if (!user) {
       dispatch(getCurrentUser());
     }
   }, [dispatch, user]);
+
+  useEffect(() => {
+    // Auto-open the section containing the current page
+    const initialOpen = {};
+    menuSections.forEach((section, index) => {
+      if (section.collapsible) {
+        const isActive = section.items.some(item => location.pathname === item.path);
+        initialOpen[index] = isActive;
+      }
+    });
+    setOpenSections(initialOpen);
+  }, [location.pathname]);
+
+  const handleSectionToggle = (sectionIndex) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [sectionIndex]: !prev[sectionIndex]
+    }));
+  };
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -195,37 +235,87 @@ const MainLayout = () => {
         <Toolbar />
         <Box sx={{ overflow: 'auto' }}>
           <List>
-            {menuItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <ListItemButton
-                  key={item.text}
-                  component={Link}
-                  to={item.path}
-                  selected={isActive}
-                  sx={{
-                    '&.Mui-selected': {
-                      backgroundColor: 'primary.light',
-                      '&:hover': {
-                        backgroundColor: 'primary.light',
-                      },
-                    },
-                  }}
-                >
-                  <ListItemIcon sx={{ color: isActive ? 'primary.main' : 'inherit' }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text} 
-                    sx={{ 
-                      '& .MuiListItemText-primary': { 
-                        fontWeight: isActive ? 600 : 400 
-                      } 
-                    }} 
-                  />
-                </ListItemButton>
-              );
-            })}
+            {menuSections.map((section, sectionIndex) => (
+              <React.Fragment key={sectionIndex}>
+                {section.title && (
+                  <>
+                    {sectionIndex > 0 && <Divider sx={{ my: 1 }} />}
+                    {section.collapsible ? (
+                      <ListItemButton
+                        onClick={() => handleSectionToggle(sectionIndex)}
+                        sx={{
+                          bgcolor: 'grey.100',
+                          '&:hover': { bgcolor: 'grey.200' }
+                        }}
+                      >
+                        <ListItemIcon>
+                          <SettingsIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={section.title}
+                          primaryTypographyProps={{
+                            fontWeight: 600,
+                            color: 'primary.main',
+                            fontSize: '0.875rem'
+                          }}
+                        />
+                        {openSections[sectionIndex] ? <ExpandLess /> : <ExpandMore />}
+                      </ListItemButton>
+                    ) : (
+                      <ListItem sx={{ bgcolor: 'grey.100', py: 0.5 }}>
+                        <ListItemText
+                          primary={section.title}
+                          primaryTypographyProps={{
+                            fontWeight: 600,
+                            color: 'primary.main',
+                            fontSize: '0.875rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5
+                          }}
+                        />
+                      </ListItem>
+                    )}
+                  </>
+                )}
+                {(!section.collapsible || openSections[sectionIndex]) && (
+                  <Box sx={{ pl: section.title ? 0 : 0 }}>
+                    {section.items.map((item) => {
+                      const isActive = location.pathname === item.path;
+                      return (
+                        <ListItemButton
+                          key={item.text}
+                          component={Link}
+                          to={item.path}
+                          selected={isActive}
+                          sx={{
+                            pl: section.collapsible ? 4 : 2,
+                            '&.Mui-selected': {
+                              backgroundColor: 'primary.light',
+                              borderLeft: 3,
+                              borderColor: 'primary.main',
+                              '&:hover': {
+                                backgroundColor: 'primary.light',
+                              },
+                            },
+                          }}
+                        >
+                          <ListItemIcon sx={{ color: isActive ? 'primary.main' : 'inherit', minWidth: 40 }}>
+                            {item.icon}
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={item.text}
+                            primaryTypographyProps={{
+                              fontWeight: isActive ? 600 : 400,
+                              fontSize: '0.875rem'
+                            }}
+                          />
+                        </ListItemButton>
+                      );
+                    })}
+                  </Box>
+                )}
+              </React.Fragment>
+            ))}
           </List>
         </Box>
       </Drawer>

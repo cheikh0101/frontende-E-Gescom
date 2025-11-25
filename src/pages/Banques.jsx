@@ -57,9 +57,8 @@ const Banques = () => {
   const filteredBanques = banques.filter(banque =>
     banque.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     banque.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    banque.iban?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    banque.numero_compte?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    banque.guichet?.toLowerCase().includes(searchTerm.toLowerCase())
+    banque.diminutif?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    banque.adresse?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -221,7 +220,7 @@ const Banques = () => {
       <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
         <TextField
           fullWidth
-          placeholder="Rechercher une banque par nom, code, IBAN ou numéro de compte..."
+          placeholder="Rechercher une banque par nom, code, diminutif ou adresse..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{
@@ -248,13 +247,10 @@ const Banques = () => {
                   Nom de la banque
                 </TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>
-                  Guichet
+                  Diminutif
                 </TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>
-                  Numéro de compte
-                </TableCell>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>
-                  IBAN
+                  Adresse
                 </TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }} align="right">
                   Actions
@@ -264,13 +260,13 @@ const Banques = () => {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : filteredBanques.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
                     <BankIcon sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
                     <Typography variant="h6" color="text.secondary">
                       {searchTerm ? 'Aucune banque trouvée' : 'Aucune banque enregistrée'}
@@ -311,23 +307,13 @@ const Banques = () => {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {banque.guichet || '-'}
+                        {banque.diminutif || '-'}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                        {banque.numero_compte}
+                      <Typography variant="body2" color="text.secondary">
+                        {banque.adresse || '-'}
                       </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Tooltip title={banque.iban}>
-                        <Chip
-                          label={banque.iban}
-                          variant="outlined"
-                          size="small"
-                          sx={{ fontFamily: 'monospace', maxWidth: '200px' }}
-                        />
-                      </Tooltip>
                     </TableCell>
                     <TableCell align="right">
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>

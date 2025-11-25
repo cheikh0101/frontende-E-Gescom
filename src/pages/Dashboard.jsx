@@ -1,10 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
-import { fetchAgents } from '../features/agents/agentSlice';
-import { fetchContrats } from '../features/contrats/contratSlice';
-import { fetchStructures } from '../features/structures/structureSlice';
-import { fetchBanques } from '../features/banques/banqueSlice';
+import { fetchDashboardData } from '../features/dashboard/dashboardSlice';
 import {
   Box,
   Typography,
@@ -21,7 +18,9 @@ import {
   Chip,
   Alert,
   IconButton,
-  Tooltip
+  Tooltip,
+  CircularProgress,
+  LinearProgress
 } from '@mui/material';
 import {
   People as PeopleIcon,
@@ -30,51 +29,25 @@ import {
   AccountBalance as BankIcon,
   TrendingUp as TrendingUpIcon,
   Warning as WarningIcon,
-  ArrowForward as ArrowForwardIcon
+  ArrowForward as ArrowForwardIcon,
+  Payments as PaymentsIcon,
+  Timeline as TimelineIcon
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
+dayjs.locale('fr');
 
 const Dashboard = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { agents } = useAppSelector((state) => state.agents);
-  const { contrats } = useAppSelector((state) => state.contrats);
-  const { structures } = useAppSelector((state) => state.structures);
-  const { banques } = useAppSelector((state) => state.banques);
+  const { data, loading, error } = useAppSelector((state) => state.dashboard);
 
   useEffect(() => {
-    dispatch(fetchAgents());
-    dispatch(fetchContrats());
-    dispatch(fetchStructures());
-    dispatch(fetchBanques());
+    dispatch(fetchDashboardData());
   }, [dispatch]);
-
-  // Calculs des statistiques
-  const contratsActifs = contrats.filter(c => 
-    c.state_contrat?.nom?.toLowerCase().includes('actif')
-  ).length;
-
-  const contratsExpirantBientot = contrats.filter(c => {
-    const dateFin = dayjs(c.date_fin);
-    const aujourd_hui = dayjs();
-    const joursDiff = dateFin.diff(aujourd_hui, 'day');
-    return joursDiff >= 0 && joursDiff <= 30;
-  });
-
-  const contratsExpires = contrats.filter(c => {
-    const dateFin = dayjs(c.date_fin);
-    return dateFin.isBefore(dayjs());
-  }).length;
-
-  // Derniers contrats créés
-  const derniersContrats = [...contrats]
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 5);
-
-  // Derniers agents ajoutés
-  const derniersAgents = [...agents]
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 5);
 
   const StatCard = ({ title, value, icon, gradient, onClick }) => (
     <Card 
@@ -112,6 +85,47 @@ const Dashboard = () => {
     </Card>
   );
 
+  const formatMontant = (montant) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(montant) + ' FCFA';
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <LinearProgress sx={{ mb: 2 }} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <Box sx={{ textAlign: 'center' }}>
+            <CircularProgress size={60} />
+            <Typography variant="h6" sx={{ mt: 2 }} color="text.secondary">
+              Chargement des statistiques...
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          <Typography variant="h6">Erreur de chargement</Typography>
+          {error}
+        </Alert>
+      </Box>
+    );
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  const { general, finances, contrats_by_state, paiements_by_state, expiring_contracts, agents_by_structure, recent_activities } = data;
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -121,21 +135,20 @@ const Dashboard = () => {
             Tableau de bord
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Vue d'ensemble de votre gestion contractuelle
+            Vue d'ensemble de votre gestion contractuelle - Mis à jour {dayjs().format('DD MMMM YYYY [à] HH:mm')}
           </Typography>
         </Box>
+        <Tooltip title="Actualiser">
+          <IconButton onClick={() => dispatch(fetchDashboardData())} color="primary">
+            <TimelineIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       {/* Alertes */}
-      {contratsExpires > 0 && (
-        <Alert severity="error" sx={{ mb: 3 }} icon={<WarningIcon />}>
-          <strong>{contratsExpires}</strong> contrat{contratsExpires > 1 ? 's' : ''} expiré{contratsExpires > 1 ? 's' : ''}
-        </Alert>
-      )}
-
-      {contratsExpirantBientot.length > 0 && (
+      {expiring_contracts.length > 0 && (
         <Alert severity="warning" sx={{ mb: 3 }} icon={<WarningIcon />}>
-          <strong>{contratsExpirantBientot.length}</strong> contrat{contratsExpirantBientot.length > 1 ? 's' : ''} expirant dans les 30 jours
+          <strong>{expiring_contracts.length}</strong> contrat{expiring_contracts.length > 1 ? 's' : ''} expirant dans les 30 jours
         </Alert>
       )}
 
@@ -144,7 +157,7 @@ const Dashboard = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Agents"
-            value={agents.length}
+            value={general.total_agents}
             icon={<PeopleIcon sx={{ fontSize: 40 }} />}
             gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
             onClick={() => navigate('/agents')}
@@ -153,7 +166,7 @@ const Dashboard = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Contrats"
-            value={contrats.length}
+            value={general.total_contrats}
             icon={<DescriptionIcon sx={{ fontSize: 40 }} />}
             gradient="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
             onClick={() => navigate('/contrats')}
@@ -161,56 +174,164 @@ const Dashboard = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Contrats Actifs"
-            value={contratsActifs}
-            icon={<DescriptionIcon sx={{ fontSize: 40 }} />}
+            title="Total Paiements"
+            value={general.total_paiements}
+            icon={<PaymentsIcon sx={{ fontSize: 40 }} />}
             gradient="linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
-            onClick={() => navigate('/contrats')}
+            onClick={() => navigate('/etat-paiements')}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Structures"
-            value={structures.length}
+            value={general.total_structures}
             icon={<BusinessIcon sx={{ fontSize: 40 }} />}
             gradient="linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
             onClick={() => navigate('/structures')}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Banques"
-            value={banques.length}
-            icon={<BankIcon sx={{ fontSize: 40 }} />}
-            gradient="linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
-            onClick={() => navigate('/banques')}
-          />
+      </Grid>
+
+      {/* Statistiques financières */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+              📊 Finances Contrats
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Montant Total
+                  </Typography>
+                  <Typography variant="h6" color="primary">
+                    {formatMontant(finances.contrats.montant_total)}
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Montant Net
+                  </Typography>
+                  <Typography variant="h6" color="success.main">
+                    {formatMontant(finances.contrats.montant_net)}
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Montant Retenu
+                  </Typography>
+                  <Typography variant="h6" color="error">
+                    {formatMontant(finances.contrats.montant_retenu)}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Contrats Expirés"
-            value={contratsExpires}
-            icon={<WarningIcon sx={{ fontSize: 40 }} />}
-            gradient="linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)"
-          />
+
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+              💰 Finances Paiements
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Montant Total
+                  </Typography>
+                  <Typography variant="h6" color="primary">
+                    {formatMontant(finances.paiements.montant_total)}
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Montant Net
+                  </Typography>
+                  <Typography variant="h6" color="success.main">
+                    {formatMontant(finances.paiements.montant_net)}
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Montant Retenu
+                  </Typography>
+                  <Typography variant="h6" color="error">
+                    {formatMontant(finances.paiements.montant_retenu)}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Expire Bientôt"
-            value={contratsExpirantBientot.length}
-            icon={<WarningIcon sx={{ fontSize: 40 }} />}
-            gradient="linear-gradient(135deg, #ffa502 0%, #ff7f00 100%)"
-          />
+      </Grid>
+
+      {/* Répartition par état */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+              📋 Contrats par État
+            </Typography>
+            {contrats_by_state.map((item, index) => (
+              <Box key={index} sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                  <Typography variant="body2">{item.state_name}</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {item.count} ({item.percentage}%)
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={item.percentage} 
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+              </Box>
+            ))}
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+              💳 Paiements par État
+            </Typography>
+            {paiements_by_state.map((item, index) => (
+              <Box key={index} sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                  <Typography variant="body2">{item.state_name}</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {item.count} ({item.percentage}%)
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={item.percentage} 
+                  sx={{ height: 8, borderRadius: 4 }}
+                  color={item.state_name === 'Payé' ? 'success' : 'primary'}
+                />
+              </Box>
+            ))}
+          </Paper>
         </Grid>
       </Grid>
 
       <Grid container spacing={3}>
-        {/* Derniers contrats */}
+        {/* Contrats expirant bientôt */}
         <Grid item xs={12} lg={6}>
           <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Derniers Contrats
+                ⚠️ Contrats Expirant Bientôt
               </Typography>
               <Tooltip title="Voir tous les contrats">
                 <IconButton size="small" onClick={() => navigate('/contrats')}>
@@ -222,38 +343,36 @@ const Dashboard = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Numéro</TableCell>
                     <TableCell>Agent</TableCell>
+                    <TableCell>Fonction</TableCell>
                     <TableCell>Date fin</TableCell>
-                    <TableCell>État</TableCell>
+                    <TableCell>Jours</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {derniersContrats.length === 0 ? (
+                  {expiring_contracts.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                         <Typography variant="body2" color="text.secondary">
-                          Aucun contrat
+                          Aucun contrat expirant bientôt
                         </Typography>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    derniersContrats.map((contrat) => (
+                    expiring_contracts.map((contrat) => (
                       <TableRow key={contrat.id} hover>
+                        <TableCell>{contrat.agent_name}</TableCell>
                         <TableCell>
-                          <Chip label={contrat.numero} size="small" color="primary" />
-                        </TableCell>
-                        <TableCell>
-                          {contrat.agent?.nom} {contrat.agent?.prenom}
+                          <Chip label={contrat.fonction} size="small" variant="outlined" />
                         </TableCell>
                         <TableCell>
                           {dayjs(contrat.date_fin).format('DD/MM/YYYY')}
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={contrat.state_contrat?.nom || 'N/A'}
+                            label={`${contrat.days_remaining}j`}
                             size="small"
-                            color={contrat.state_contrat?.nom?.toLowerCase().includes('actif') ? 'success' : 'default'}
+                            color={contrat.days_remaining <= 7 ? 'error' : 'warning'}
                           />
                         </TableCell>
                       </TableRow>
@@ -265,15 +384,15 @@ const Dashboard = () => {
           </Paper>
         </Grid>
 
-        {/* Derniers agents */}
+        {/* Agents par structure */}
         <Grid item xs={12} lg={6}>
           <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Derniers Agents
+                🏢 Agents par Structure
               </Typography>
-              <Tooltip title="Voir tous les agents">
-                <IconButton size="small" onClick={() => navigate('/agents')}>
+              <Tooltip title="Voir toutes les structures">
+                <IconButton size="small" onClick={() => navigate('/structures')}>
                   <ArrowForwardIcon />
                 </IconButton>
               </Tooltip>
@@ -282,34 +401,39 @@ const Dashboard = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Matricule</TableCell>
-                    <TableCell>Nom & Prénom</TableCell>
                     <TableCell>Structure</TableCell>
+                    <TableCell align="center">Agents</TableCell>
+                    <TableCell align="center">Contrats</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {derniersAgents.length === 0 ? (
+                  {agents_by_structure.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
                         <Typography variant="body2" color="text.secondary">
-                          Aucun agent
+                          Aucune donnée
                         </Typography>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    derniersAgents.map((agent) => (
-                      <TableRow key={agent.id} hover>
+                    agents_by_structure.map((item, index) => (
+                      <TableRow key={index} hover>
                         <TableCell>
-                          <Chip label={agent.matricule} size="small" color="primary" />
+                          <Typography variant="body2" fontWeight={500}>
+                            {item.structure_name}
+                          </Typography>
                         </TableCell>
-                        <TableCell>
-                          {agent.nom} {agent.prenom}
+                        <TableCell align="center">
+                          <Chip 
+                            label={item.agent_count} 
+                            size="small" 
+                            color="primary"
+                          />
                         </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={agent.structure?.nom || 'N/A'}
-                            size="small"
-                            variant="outlined"
+                        <TableCell align="center">
+                          <Chip 
+                            label={item.contrat_count} 
+                            size="small" 
                             color="secondary"
                           />
                         </TableCell>
@@ -322,60 +446,40 @@ const Dashboard = () => {
           </Paper>
         </Grid>
 
-        {/* Contrats expirant bientôt */}
-        {contratsExpirantBientot.length > 0 && (
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3, bgcolor: '#fff3e0' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <WarningIcon color="warning" />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Contrats expirant dans les 30 jours
-                </Typography>
-              </Box>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Numéro</TableCell>
-                      <TableCell>Agent</TableCell>
-                      <TableCell>Structure</TableCell>
-                      <TableCell>Date fin</TableCell>
-                      <TableCell>Jours restants</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {contratsExpirantBientot.map((contrat) => {
-                      const joursRestants = dayjs(contrat.date_fin).diff(dayjs(), 'day');
-                      return (
-                        <TableRow key={contrat.id} hover>
-                          <TableCell>
-                            <Chip label={contrat.numero} size="small" color="primary" />
-                          </TableCell>
-                          <TableCell>
-                            {contrat.agent?.nom} {contrat.agent?.prenom}
-                          </TableCell>
-                          <TableCell>
-                            {contrat.structure?.nom}
-                          </TableCell>
-                          <TableCell>
-                            {dayjs(contrat.date_fin).format('DD/MM/YYYY')}
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={`${joursRestants} jour${joursRestants > 1 ? 's' : ''}`}
-                              size="small"
-                              color={joursRestants <= 7 ? 'error' : 'warning'}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          </Grid>
-        )}
+        {/* Activités récentes */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+              📅 Activités Récentes
+            </Typography>
+            {recent_activities.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
+                Aucune activité récente
+              </Typography>
+            ) : (
+              recent_activities.map((activity, index) => (
+                <Box 
+                  key={index} 
+                  sx={{ 
+                    p: 2, 
+                    mb: 1, 
+                    bgcolor: 'grey.50', 
+                    borderRadius: 1,
+                    borderLeft: 3,
+                    borderColor: activity.action === 'created' ? 'success.main' : 'info.main'
+                  }}
+                >
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    {activity.description}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {activity.date_human}
+                  </Typography>
+                </Box>
+              ))
+            )}
+          </Paper>
+        </Grid>
       </Grid>
     </Box>
   );

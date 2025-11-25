@@ -15,6 +15,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import EtatPaiements from './pages/EtatPaiements';
 import Profile from './pages/Profile';
+import SuiviActivite from './pages/SuiviActivite';
 import './App.css';
 
 function App() {
@@ -83,6 +84,7 @@ function App() {
         <Route path="state-etat-paiements" element={<StateEtatPaiements />} />
         <Route path="banques" element={<Banques />} />
         <Route path="paiements" element={<EtatPaiements />} />
+        <Route path="suivi-activite" element={<SuiviActivite />} />
         <Route path="profile" element={<Profile />} />
       </Route>
 

@@ -9,6 +9,8 @@ import stateContratReducer from '../features/stateContrat/stateContratSlice';
 import stateEtatPaiementReducer from '../features/stateEtatPaiement/stateEtatPaiementSlice';
 import etatPaiementReducer from '../features/etatPaiement/etatPaiementSlice';
 import auditLogReducer from '../features/auditLogs/auditLogSlice';
+import dashboardReducer from '../features/dashboard/dashboardSlice';
+import relanceReducer from '../features/relances/relanceSlice';
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +24,8 @@ export const store = configureStore({
     stateEtatPaiements: stateEtatPaiementReducer,
     etatPaiements: etatPaiementReducer,
     auditLogs: auditLogReducer,
+    dashboard: dashboardReducer,
+    relances: relanceReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -261,6 +261,18 @@ const Agents = () => {
                   />
                 </Typography>
               </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Numéro de compte</Typography>
+                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                  {viewingAgent.numero_compte || '-'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">IBAN</Typography>
+                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                  {viewingAgent.iban || '-'}
+                </Typography>
+              </Box>
             </Box>
           )}
         </DialogContent>

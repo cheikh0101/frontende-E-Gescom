@@ -63,24 +63,29 @@ const ContratForm = ({ contrat, onSubmit, onCancel, errors }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    // Validation basique
+    if (!formData.agent_id || !formData.date_debut || !formData.date_fin) {
+      return;
+    }
+    
     // Nettoyer les données
     const cleanData = {
       agent_id: Number(formData.agent_id),
       type: formData.type,
-      date_debut: formData.date_debut ? dayjs(formData.date_debut).format('YYYY-MM-DD') : '',
-      date_fin: formData.date_fin ? dayjs(formData.date_fin).format('YYYY-MM-DD') : '',
-      montant_total: Number(formData.montant_total),
-      montant_net: Number(formData.montant_net),
-      montant_retenu: Number(formData.montant_retenu),
-      fonction: formData.fonction,
-      state_contrat_id: formData.state_contrat_id ? Number(formData.state_contrat_id) : undefined
+      date_debut: dayjs(formData.date_debut).format('YYYY-MM-DD'),
+      date_fin: dayjs(formData.date_fin).format('YYYY-MM-DD'),
+      montant_total: Number(formData.montant_total) || 0,
+      montant_net: Number(formData.montant_net) || 0,
+      montant_retenu: Number(formData.montant_retenu) || 0,
+      fonction: formData.fonction
     };
 
-    // Retirer les champs vides optionnels
-    if (!cleanData.state_contrat_id) {
-      delete cleanData.state_contrat_id;
+    // Ajouter les champs optionnels s'ils existent
+    if (formData.state_contrat_id) {
+      cleanData.state_contrat_id = Number(formData.state_contrat_id);
     }
 
+    console.log('Données envoyées:', cleanData);
     onSubmit(cleanData);
   };
 

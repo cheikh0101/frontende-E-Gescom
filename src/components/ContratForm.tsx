@@ -56,7 +56,22 @@ const ContratForm: React.FC<ContratFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Nettoyer et convertir les données
+    const cleanedData = {
+      ...formData,
+      agent_id: Number(formData.agent_id),
+      montant_total: Number(formData.montant_total),
+      montant_net: Number(formData.montant_net),
+      montant_retenu: Number(formData.montant_retenu),
+    };
+    
+    // Supprimer les champs vides optionnels
+    if (!cleanedData.fichier) delete cleanedData.fichier;
+    if (!cleanedData.date_resiliation) delete cleanedData.date_resiliation;
+    
+    onSubmit(cleanedData);
+    
     if (!initialData.id) {
       setFormData({
         type: '',

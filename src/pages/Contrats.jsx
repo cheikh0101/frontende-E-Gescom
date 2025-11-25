@@ -44,7 +44,8 @@ import {
   Search as SearchIcon,
   Visibility as VisibilityIcon,
   History as HistoryIcon,
-  FindInPage as FindInPageIcon
+  FindInPage as FindInPageIcon,
+  PictureAsPdf as PdfIcon
 } from '@mui/icons-material';
 import ContratForm from '../components/ContratForm';
 import AuditHistoryDialog from '../components/contrats/AuditHistoryDialog';
@@ -668,6 +669,46 @@ const Contrats = () => {
                           }}
                         >
                           <FindInPageIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Télécharger PDF">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                              const token = localStorage.getItem('token');
+                              
+                              const response = await fetch(`${API_BASE_URL}/api/contrats/${contrat.id}/download-pdf`, {
+                                method: 'GET',
+                                headers: {
+                                  'Authorization': `Bearer ${token}`,
+                                  'Accept': 'application/pdf',
+                                },
+                              });
+
+                              if (!response.ok) {
+                                throw new Error('Erreur lors du téléchargement du PDF');
+                              }
+
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `contrat_${contrat.agent?.nom}_${contrat.agent?.prenom}.pdf`;
+                              document.body.appendChild(a);
+                              a.click();
+                              window.URL.revokeObjectURL(url);
+                              document.body.removeChild(a);
+                            } catch (error) {
+                              console.error('Erreur PDF:', error);
+                              alert('Erreur lors du téléchargement du PDF');
+                            }
+                          }}
+                        >
+                          <PdfIcon />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Modifier">

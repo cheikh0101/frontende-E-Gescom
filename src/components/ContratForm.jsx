@@ -26,6 +26,8 @@ const ContratForm = ({ contrat, onSubmit, onCancel, errors }) => {
     montant_net: '',
     montant_retenu: '',
     fonction: '',
+    diplome: '',
+    taches: '',
     state_contrat_id: ''
   });
 
@@ -40,6 +42,8 @@ const ContratForm = ({ contrat, onSubmit, onCancel, errors }) => {
         montant_net: contrat.montant_net || '',
         montant_retenu: contrat.montant_retenu || '',
         fonction: contrat.fonction || '',
+        diplome: contrat.diplome || '',
+        taches: contrat.taches || '',
         state_contrat_id: contrat.state_contrat_id || ''
       });
     }
@@ -78,6 +82,14 @@ const ContratForm = ({ contrat, onSubmit, onCancel, errors }) => {
       montant_net: Number(formData.montant_net) || 0,
       montant_retenu: Number(formData.montant_retenu) || 0,
       fonction: formData.fonction
+    };
+
+    // Ajouter diplome et taches s'ils sont remplis
+    if (formData.diplome) {
+      cleanData.diplome = formData.diplome;
+    }
+    if (formData.taches) {
+      cleanData.taches = formData.taches;
     };
 
     // Ajouter les champs optionnels s'ils existent
@@ -221,6 +233,30 @@ const ContratForm = ({ contrat, onSubmit, onCancel, errors }) => {
         margin="normal"
         error={!!getFieldError('fonction')}
         helperText={getFieldError('fonction') || 'Ex: Développeur, Comptable, Manager...'}
+      />
+
+      <TextField
+        fullWidth
+        label="Diplôme"
+        name="diplome"
+        value={formData.diplome}
+        onChange={handleChange}
+        margin="normal"
+        error={!!getFieldError('diplome')}
+        helperText={getFieldError('diplome') || 'Ex: Technicien supérieur en informatique - Génie logiciel'}
+      />
+
+      <TextField
+        fullWidth
+        label="Tâches et missions"
+        name="taches"
+        value={formData.taches}
+        onChange={handleChange}
+        margin="normal"
+        multiline
+        rows={4}
+        error={!!getFieldError('taches')}
+        helperText={getFieldError('taches') || 'Listez les tâches principales (séparées par des points-virgules)'}
       />
 
       <FormControl fullWidth margin="normal">

@@ -232,8 +232,20 @@ const Agents = () => {
                 <Typography variant="body1">{viewingAgent.lieu_de_naissance}</Typography>
               </Box>
               <Box>
+                <Typography variant="caption" color="text.secondary">Civilité</Typography>
+                <Typography variant="body1">{viewingAgent.civilite || <em style={{ color: '#999' }}>Non renseigné</em>}</Typography>
+              </Box>
+              <Box>
                 <Typography variant="caption" color="text.secondary">Numéro CNI</Typography>
                 <Typography variant="body1">{viewingAgent.numero_cni}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Date de délivrance CNI</Typography>
+                <Typography variant="body1">{viewingAgent.date_delivrance_cni || <em style={{ color: '#999' }}>Non renseigné</em>}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Lieu de délivrance CNI</Typography>
+                <Typography variant="body1">{viewingAgent.lieu_delivrance_cni || <em style={{ color: '#999' }}>Non renseigné</em>}</Typography>
               </Box>
               <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
                 <Typography variant="caption" color="text.secondary">Adresse</Typography>

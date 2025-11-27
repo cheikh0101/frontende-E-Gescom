@@ -386,6 +386,32 @@ const Contrats = () => {
 
               <Box>
                 <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  Diplôme
+                </Typography>
+                <Typography variant="body1" sx={{ mt: 0.5 }}>
+                  {selectedContrat.diplome || <em style={{ color: '#999' }}>Non renseigné</em>}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  Tâches et missions
+                </Typography>
+                <Typography variant="body1" sx={{ mt: 0.5, whiteSpace: 'pre-line' }}>
+                  {selectedContrat.taches ? (
+                    selectedContrat.taches.split(';').map((tache, index) => (
+                      <Box key={index} component="span" sx={{ display: 'block', mb: 0.5 }}>
+                        • {tache.trim()}
+                      </Box>
+                    ))
+                  ) : (
+                    <em style={{ color: '#999' }}>Non renseigné</em>
+                  )}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                   État du contrat
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>

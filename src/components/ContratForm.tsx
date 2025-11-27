@@ -31,6 +31,8 @@ const ContratForm: React.FC<ContratFormProps> = ({
     montant_net: '',
     montant_retenu: '',
     fonction: '',
+    diplome: '',
+    taches: '',
     fichier: '',
     date_resiliation: null,
     agent_id: ''
@@ -69,6 +71,8 @@ const ContratForm: React.FC<ContratFormProps> = ({
     // Supprimer les champs vides optionnels
     if (!cleanedData.fichier) delete cleanedData.fichier;
     if (!cleanedData.date_resiliation) delete cleanedData.date_resiliation;
+    if (!cleanedData.diplome) delete cleanedData.diplome;
+    if (!cleanedData.taches) delete cleanedData.taches;
     
     onSubmit(cleanedData);
     
@@ -81,6 +85,8 @@ const ContratForm: React.FC<ContratFormProps> = ({
         montant_net: '',
         montant_retenu: '',
         fonction: '',
+        diplome: '',
+        taches: '',
         fichier: '',
         date_resiliation: null,
         agent_id: ''
@@ -205,6 +211,30 @@ const ContratForm: React.FC<ContratFormProps> = ({
               onChange={handleChange}
               required
               fullWidth
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name="diplome"
+              label="Diplôme"
+              value={formData.diplome}
+              onChange={handleChange}
+              fullWidth
+              placeholder="Ex: Technicien supérieur en informatique - Génie logiciel"
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              name="taches"
+              label="Tâches et missions"
+              value={formData.taches}
+              onChange={handleChange}
+              fullWidth
+              multiline
+              rows={4}
+              placeholder="Listez les tâches principales (séparées par des points-virgules)"
             />
           </Grid>
 

@@ -12,6 +12,7 @@ const AgentForm = ({
   errors = null
 }) => {
   const [formData, setFormData] = React.useState({
+    civilite: 'Monsieur',
     prenom: '',
     nom: '',
     email: '',
@@ -21,6 +22,8 @@ const AgentForm = ({
     date_de_naissance: null,
     lieu_de_naissance: '',
     numero_cni: '',
+    date_delivrance_cni: null,
+    lieu_delivrance_cni: '',
     adresse: '',
     structure_id: '',
     banque_id: '',
@@ -34,6 +37,7 @@ const AgentForm = ({
   useEffect(() => {
     if (agent?.id) {
       setFormData({
+        civilite: agent.civilite || 'Monsieur',
         prenom: agent.prenom || '',
         nom: agent.nom || '',
         email: agent.email || '',
@@ -43,6 +47,8 @@ const AgentForm = ({
         date_de_naissance: agent.date_de_naissance || null,
         lieu_de_naissance: agent.lieu_de_naissance || '',
         numero_cni: agent.numero_cni || '',
+        date_delivrance_cni: agent.date_delivrance_cni || null,
+        lieu_delivrance_cni: agent.lieu_delivrance_cni || '',
         adresse: agent.adresse || '',
         structure_id: agent.structure_id || '',
         banque_id: agent.banque_id || '',
@@ -51,6 +57,7 @@ const AgentForm = ({
       });
     } else {
       setFormData({
+        civilite: 'Monsieur',
         prenom: '',
         nom: '',
         email: '',
@@ -60,6 +67,8 @@ const AgentForm = ({
         date_de_naissance: null,
         lieu_de_naissance: '',
         numero_cni: '',
+        date_delivrance_cni: null,
+        lieu_delivrance_cni: '',
         adresse: '',
         structure_id: '',
         banque_id: '',
@@ -131,6 +140,19 @@ const AgentForm = ({
         </Alert>
       )}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+        <FormControl fullWidth required>
+          <InputLabel>Civilité</InputLabel>
+          <Select
+            name="civilite"
+            value={formData.civilite}
+            onChange={handleChange}
+            label="Civilité"
+          >
+            <MenuItem value="Monsieur">Monsieur</MenuItem>
+            <MenuItem value="Madame">Madame</MenuItem>
+            <MenuItem value="Mademoiselle">Mademoiselle</MenuItem>
+          </Select>
+        </FormControl>
         <TextField
           name="prenom"
           label="Prénom"
@@ -190,7 +212,12 @@ const AgentForm = ({
         <DatePicker
           label="Date de naissance"
           value={formData.date_de_naissance ? dayjs(formData.date_de_naissance) : null}
-          onChange={handleDateChange}
+          onChange={(date) => {
+            setFormData((prev) => ({
+              ...prev,
+              date_de_naissance: date ? dayjs(date).format('YYYY-MM-DD') : null,
+            }));
+          }}
           format="DD/MM/YYYY"
           slotProps={{
             textField: {
@@ -216,6 +243,29 @@ const AgentForm = ({
           fullWidth
           error={!!(errors?.numero_cni)}
           helperText={errors?.numero_cni?.[0] || ''}
+        />
+        <DatePicker
+          label="Date de délivrance CNI"
+          value={formData.date_delivrance_cni ? dayjs(formData.date_delivrance_cni) : null}
+          onChange={(date) => {
+            setFormData((prev) => ({
+              ...prev,
+              date_delivrance_cni: date ? dayjs(date).format('YYYY-MM-DD') : null,
+            }));
+          }}
+          format="DD/MM/YYYY"
+          slotProps={{
+            textField: {
+              fullWidth: true
+            }
+          }}
+        />
+        <TextField
+          name="lieu_delivrance_cni"
+          label="Lieu de délivrance CNI"
+          value={formData.lieu_delivrance_cni}
+          onChange={handleChange}
+          fullWidth
         />
         <TextField
           name="adresse"

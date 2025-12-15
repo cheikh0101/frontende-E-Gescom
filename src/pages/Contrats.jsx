@@ -49,6 +49,7 @@ import {
 } from '@mui/icons-material';
 import ContratForm from '../components/ContratForm';
 import AuditHistoryDialog from '../components/contrats/AuditHistoryDialog';
+import ContratCard from '../components/contrats/ContratCard';
 import dayjs from 'dayjs';
 
 const Contrats = () => {
@@ -69,6 +70,8 @@ const Contrats = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [formErrors, setFormErrors] = useState(null);
+  const [filterState, setFilterState] = useState('all'); // all, actifs, expirés, renouveler
+  const [viewMode, setViewMode] = useState('cards'); // cards ou tableau
 
   useEffect(() => {
     dispatch(fetchContrats());
@@ -163,14 +166,54 @@ const Contrats = () => {
     dispatch(fetchStructures());
   }, [dispatch]);
 
-  const filteredContrats = contrats.filter(contrat =>
-    contrat.agent?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contrat.agent?.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contrat.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contrat.structure?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredContrats = contrats
+    .filter(contrat => {
+      // Filtrage par texte
+      const matchText =
+        contrat.agent?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contrat.agent?.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contrat.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contrat.structure?.nom?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const contratsActifs = contrats.filter(c => c.current_state?.code === 'EN_COURS');
+      if (!matchText) return false;
+
+      // Filtrage par état
+      if (filterState === 'all') return true;
+
+      const today = dayjs();
+      const endDate = dayjs(contrat.date_fin);
+      const daysRemaining = endDate.diff(today, 'day');
+
+      if (filterState === 'actifs') {
+        return contrat.current_state?.code === 'EN_COURS' && daysRemaining > 30;
+      } else if (filterState === 'expirés') {
+        return daysRemaining < 0;
+      } else if (filterState === 'renouveler') {
+        return daysRemaining >= 0 && daysRemaining <= 30;
+      }
+
+      return true;
+    });
+
+  const contratsActifs = contrats.filter(c => {
+    const today = dayjs();
+    const endDate = dayjs(c.date_fin);
+    const daysRemaining = endDate.diff(today, 'day');
+    return c.current_state?.code === 'EN_COURS' && daysRemaining > 30;
+  });
+
+  const contratsExpirés = contrats.filter(c => {
+    const today = dayjs();
+    const endDate = dayjs(c.date_fin);
+    return endDate.diff(today, 'day') < 0;
+  });
+
+  const contratsRenouveler = contrats.filter(c => {
+    const today = dayjs();
+    const endDate = dayjs(c.date_fin);
+    const daysRemaining = endDate.diff(today, 'day');
+    return daysRemaining >= 0 && daysRemaining <= 30;
+  });
 
   return (
     <Box sx={{ p: 3 }}>
@@ -197,7 +240,7 @@ const Contrats = () => {
       </Box>
 
       <Box sx={{ mb: 3, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
-        <Card sx={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
+        <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>Total Contrats</Typography>
             <Typography variant="h3" sx={{ fontWeight: 700 }}>
@@ -210,6 +253,22 @@ const Contrats = () => {
             <Typography variant="h6" gutterBottom>Contrats Actifs</Typography>
             <Typography variant="h3" sx={{ fontWeight: 700 }}>
               {contratsActifs.length}
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card sx={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: 'white' }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>À Renouveler</Typography>
+            <Typography variant="h3" sx={{ fontWeight: 700 }}>
+              {contratsRenouveler.length}
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card sx={{ background: 'linear-gradient(135deg, #ff6a00 0%, #ee0979 100%)', color: 'white' }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>Contrats Expirés</Typography>
+            <Typography variant="h3" sx={{ fontWeight: 700 }}>
+              {contratsExpirés.length}
             </Typography>
           </CardContent>
         </Card>
@@ -571,12 +630,13 @@ const Contrats = () => {
         contrat={selectedContrat}
       />
 
-      <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+      <Paper sx={{ p: 2, mb: 3, borderRadius: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
         <TextField
-          fullWidth
           placeholder="Rechercher par agent, type ou structure..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          size="small"
+          sx={{ flex: 1, minWidth: 250 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -585,190 +645,73 @@ const Contrats = () => {
             ),
           }}
         />
+        
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Chip
+            label={`Tous (${contrats.length})`}
+            onClick={() => setFilterState('all')}
+            variant={filterState === 'all' ? 'filled' : 'outlined'}
+            color="primary"
+          />
+          <Chip
+            label={`Actifs (${contratsActifs.length})`}
+            onClick={() => setFilterState('actifs')}
+            variant={filterState === 'actifs' ? 'filled' : 'outlined'}
+            color="success"
+          />
+          <Chip
+            label={`À Renouveler (${contratsRenouveler.length})`}
+            onClick={() => setFilterState('renouveler')}
+            variant={filterState === 'renouveler' ? 'filled' : 'outlined'}
+            color="warning"
+          />
+          <Chip
+            label={`Expirés (${contratsExpirés.length})`}
+            onClick={() => setFilterState('expirés')}
+            variant={filterState === 'expirés' ? 'filled' : 'outlined'}
+            color="error"
+          />
+        </Box>
       </Paper>
 
-      <Paper sx={{ width: '100%', overflow: 'hidden', borderRadius: 2, boxShadow: 3 }}>
-        <TableContainer sx={{ maxHeight: 600 }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Agent</TableCell>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Type</TableCell>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Structure</TableCell>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Date Début</TableCell>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>Date Fin</TableCell>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}>État</TableCell>
-                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }} align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
-              ) : filteredContrats.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
-                    <DescriptionIcon sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
-                    <Typography variant="h6" color="text.secondary">
-                      Aucun contrat
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredContrats.map((contrat) => (
-                  <TableRow
-                    key={contrat.id}
-                    hover
-                    selected={selectedContrat?.id === contrat.id}
-                    onClick={() => dispatch(setSelectedContrat(contrat))}
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {contrat.agent?.prenom} {contrat.agent?.nom}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={contrat.type} color="primary" size="small" variant="outlined" />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={contrat.structure?.diminutif || contrat.structure?.nom || 'Non assigné'}
-                        variant="outlined"
-                        size="small"
-                        color="secondary"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {dayjs(contrat.date_debut).format('DD/MM/YYYY')}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {dayjs(contrat.date_fin).format('DD/MM/YYYY')}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={contrat.current_state?.nom || 'Non défini'}
-                        size="small"
-                        color={contrat.current_state?.nom?.toLowerCase().includes('actif') ? 'success' : 'default'}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Voir détails">
-                        <IconButton
-                          size="small"
-                          color="info"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            dispatch(setSelectedContrat(contrat));
-                            setViewDialogOpen(true);
-                          }}
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Historique des états">
-                        <IconButton
-                          size="small"
-                          color="secondary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openHistoryDialog(contrat);
-                          }}
-                        >
-                          <HistoryIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Audit complet">
-                        <IconButton
-                          size="small"
-                          color="warning"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openAuditDialog(contrat);
-                          }}
-                        >
-                          <FindInPageIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Télécharger PDF">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            try {
-                              const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-                              const token = localStorage.getItem('token');
-                              
-                              const response = await fetch(`${API_BASE_URL}/api/contrats/${contrat.id}/download-pdf`, {
-                                method: 'GET',
-                                headers: {
-                                  'Authorization': `Bearer ${token}`,
-                                  'Accept': 'application/pdf',
-                                },
-                              });
-
-                              if (!response.ok) {
-                                throw new Error('Erreur lors du téléchargement du PDF');
-                              }
-
-                              const blob = await response.blob();
-                              const url = window.URL.createObjectURL(blob);
-                              const a = document.createElement('a');
-                              a.href = url;
-                              a.download = `contrat_${contrat.agent?.nom}_${contrat.agent?.prenom}.pdf`;
-                              document.body.appendChild(a);
-                              a.click();
-                              window.URL.revokeObjectURL(url);
-                              document.body.removeChild(a);
-                            } catch (error) {
-                              console.error('Erreur PDF:', error);
-                              alert('Erreur lors du téléchargement du PDF');
-                            }
-                          }}
-                        >
-                          <PdfIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Modifier">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingContrat(contrat);
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Supprimer">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openDeleteDialog(contrat);
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+      {isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : filteredContrats.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <DescriptionIcon sx={{ fontSize: 80, color: 'text.disabled', mb: 2 }} />
+          <Typography variant="h5" color="text.secondary" gutterBottom>
+            Aucun contrat trouvé
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Essayez de modifier vos critères de recherche ou de filtre
+          </Typography>
+        </Box>
+      ) : (
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(3, 1fr)' }, gap: 3 }}>
+          {filteredContrats.map((contrat) => (
+            <ContratCard
+              key={contrat.id}
+              contrat={contrat}
+              isSelected={selectedContrat?.id === contrat.id}
+              onView={(c) => {
+                dispatch(setSelectedContrat(c));
+                setViewDialogOpen(true);
+              }}
+              onEdit={(c) => {
+                setEditingContrat(c);
+              }}
+              onDelete={(c) => {
+                dispatch(setSelectedContrat(c));
+                setDeleteDialogOpen(true);
+              }}
+              onHistory={openHistoryDialog}
+              onAudit={openAuditDialog}
+            />
+          ))}
+        </Box>
+      )}
     </Box>
   );
 };

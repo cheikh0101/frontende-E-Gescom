@@ -301,8 +301,8 @@ const SuiviActivite: React.FC = () => {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
                         <Chip
-                          label={`${user.jours_inactivite} jours`}
-                          color={user.jours_inactivite >= 30 ? 'error' : 'warning'}
+                          label={user.jours_inactivite >= 999 ? 'Jamais connecté' : `${user.jours_inactivite} jours`}
+                          color={user.jours_inactivite >= 999 ? 'default' : user.jours_inactivite >= 30 ? 'error' : 'warning'}
                           size="small"
                         />
                       </TableCell>
@@ -358,7 +358,7 @@ const SuiviActivite: React.FC = () => {
                       <TableCell>{relance.user?.name}</TableCell>
                       <TableCell>{relance.user?.email}</TableCell>
                       <TableCell>
-                        <Chip label={`${relance.jours_inactivite} jours`} size="small" />
+                        <Chip label={relance.jours_inactivite >= 999 ? 'Jamais connecté' : `${relance.jours_inactivite} jours`} size="small" />
                       </TableCell>
                       <TableCell>{formatDate(relance.created_at)}</TableCell>
                       <TableCell>

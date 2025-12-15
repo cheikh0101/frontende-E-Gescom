@@ -11,6 +11,19 @@ interface EtatPaiement {
   montant_net: number;
   montant_retenu: number;
   fichier?: string;
+  state_etat_paiement_id?: number;
+  state_etat_paiement?: {
+    id: number;
+    code: string;
+    nom: string;
+  };
+  agent?: {
+    id: number;
+    prenom: string;
+    nom: string;
+    matricule: string;
+    email: string;
+  };
 }
 
 interface EtatPaiementState {

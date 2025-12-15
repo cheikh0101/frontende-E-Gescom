@@ -13,6 +13,7 @@ import { useAppSelector } from '../app/hooks';
 
 const EtatPaiementForm = ({ etatPaiement, onSubmit, onCancel }) => {
   const { agents } = useAppSelector((state) => state.agents);
+  const { stateEtatPaiements } = useAppSelector((state) => state.stateEtatPaiements);
   
   const [formData, setFormData] = useState({
     periode: '',
@@ -21,11 +22,12 @@ const EtatPaiementForm = ({ etatPaiement, onSubmit, onCancel }) => {
     montant_total: '',
     montant_net: '',
     montant_retenu: '',
-    fichier: ''
+    fichier: '',
+    state_etat_paiement_id: ''
   });
 
   useEffect(() => {
-    if (etatPaiement) {
+    if (etatPaiement && etatPaiement.id) {
       setFormData({
         periode: etatPaiement.periode || '',
         agent_id: etatPaiement.agent_id || '',
@@ -33,10 +35,18 @@ const EtatPaiementForm = ({ etatPaiement, onSubmit, onCancel }) => {
         montant_total: etatPaiement.montant_total || '',
         montant_net: etatPaiement.montant_net || '',
         montant_retenu: etatPaiement.montant_retenu || '',
-        fichier: etatPaiement.fichier || ''
+        fichier: etatPaiement.fichier || '',
+        state_etat_paiement_id: etatPaiement.state_etat_paiement_id || ''
       });
+    } else {
+      // Pour les nouvelles créations, initialiser avec le premier état disponible (EN_ATTENTE par défaut)
+      const defaultState = stateEtatPaiements.find(s => s.code === 'EN_ATTENTE');
+      setFormData(prev => ({
+        ...prev,
+        state_etat_paiement_id: defaultState?.id || ''
+      }));
     }
-  }, [etatPaiement]);
+  }, [etatPaiement, stateEtatPaiements]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -137,6 +147,22 @@ const EtatPaiementForm = ({ etatPaiement, onSubmit, onCancel }) => {
           onChange={handleChange}
           helperText="URL du fichier de l'état de paiement (optionnel)"
         />
+        
+        <FormControl fullWidth>
+          <InputLabel>État du paiement</InputLabel>
+          <Select
+            name="state_etat_paiement_id"
+            value={formData.state_etat_paiement_id}
+            onChange={handleChange}
+            label="État du paiement"
+          >
+            {stateEtatPaiements.map((state) => (
+              <MenuItem key={state.id} value={state.id}>
+                {state.nom}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
       
       <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>

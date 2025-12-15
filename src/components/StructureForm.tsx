@@ -22,7 +22,6 @@ const StructureForm: React.FC<StructureFormProps> = ({
   const [formData, setFormData] = React.useState<Partial<Structure>>({
     nom: '',
     code: '',
-    type: '',
     diminutif: '',
     adresse: '',
     logo: '',
@@ -34,7 +33,6 @@ const StructureForm: React.FC<StructureFormProps> = ({
       setFormData({
         nom: structure.nom || '',
         code: structure.code || '',
-        type: structure.type || '',
         diminutif: structure.diminutif || '',
         adresse: structure.adresse || '',
         logo: structure.logo || '',
@@ -43,7 +41,6 @@ const StructureForm: React.FC<StructureFormProps> = ({
       setFormData({
         nom: '',
         code: '',
-        type: '',
         diminutif: '',
         adresse: '',
         logo: '',
@@ -63,7 +60,7 @@ const StructureForm: React.FC<StructureFormProps> = ({
     onSubmit(formData);
     if (!structure?.id) {
       // Reset form only for new structures
-      setFormData({ nom: '', code: '', type: '', diminutif: '', adresse: '', logo: '' });
+      setFormData({ nom: '', code: '', diminutif: '', adresse: '', logo: '' });
     }
   };
 
@@ -119,18 +116,6 @@ const StructureForm: React.FC<StructureFormProps> = ({
             error={!!(errors?.code)}
             helperText={errors?.code?.[0] || 'Code unique et court (ex: DGSI)'}
             placeholder="Ex: DGSI, RH, IT..."
-            size="medium"
-          />
-          
-          <TextField
-            name="type"
-            label="Type de structure"
-            value={formData.type}
-            onChange={handleChange}
-            fullWidth
-            error={!!(errors?.type)}
-            helperText={errors?.type?.[0] || 'Type d\'unité organisationnelle (Direction, Service, Agence, etc.)'}
-            placeholder="Ex: Direction, Service, Agence, Département..."
             size="medium"
           />
           

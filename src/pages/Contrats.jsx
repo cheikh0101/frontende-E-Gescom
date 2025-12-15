@@ -121,6 +121,41 @@ const Contrats = () => {
     }
   };
 
+  const handleDownloadPdf = async (contrat) => {
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API_BASE_URL}/contrats/${contrat.id}/download-pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/pdf',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `contrat_${contrat.agent?.nom}_${contrat.agent?.prenom}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      setSuccessMessage('PDF téléchargé avec succès');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Erreur PDF:', error);
+      alert('Erreur lors du téléchargement du PDF: ' + error.message);
+    }
+  };
+
   const openDeleteDialog = (contrat) => {
     dispatch(setSelectedContrat(contrat));
     setDeleteDialogOpen(true);
@@ -708,6 +743,7 @@ const Contrats = () => {
               }}
               onHistory={openHistoryDialog}
               onAudit={openAuditDialog}
+              onDownloadPdf={handleDownloadPdf}
             />
           ))}
         </Box>

@@ -19,7 +19,8 @@ import {
   MoreVert as MoreVertIcon,
   CalendarMonth as CalendarIcon,
   Person as PersonIcon,
-  Business as BusinessIcon
+  Business as BusinessIcon,
+  PictureAsPdf as PdfIcon
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 
@@ -30,6 +31,7 @@ const ContratCard = ({
   onDelete,
   onHistory,
   onAudit,
+  onDownloadPdf,
   isSelected
 }) => {
   // Calculer le nombre de jours restants
@@ -217,6 +219,18 @@ const ContratCard = ({
             }}
           >
             <FindInPageIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Télécharger PDF">
+          <IconButton
+            size="small"
+            color="error"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDownloadPdf(contrat);
+            }}
+          >
+            <PdfIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         <Tooltip title="Modifier">

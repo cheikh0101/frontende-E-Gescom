@@ -3,8 +3,10 @@ import {
   Box,
   TextField,
   Button,
-  Grid,
-  Alert
+  Alert,
+  Paper,
+  Typography,
+  Divider
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Cancel as CancelIcon } from '@mui/icons-material';
 
@@ -43,7 +45,7 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
       {errors && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
           {typeof errors === 'string' ? errors : (
             <Box>
               <strong>Erreurs de validation :</strong>
@@ -58,8 +60,18 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
           )}
         </Alert>
       )}
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
+      
+      <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
+        {banque?.id && (
+          <>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+              Modifier les informations de la banque
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+          </>
+        )}
+        
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <TextField
             fullWidth
             required
@@ -71,9 +83,9 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
             disabled={!!banque?.id}
             error={!!(errors?.code)}
             helperText={errors?.code?.[0] || (banque?.id ? "Le code ne peut pas être modifié" : "Code unique de la banque")}
+            size="medium"
           />
-        </Grid>
-        <Grid item xs={12}>
+          
           <TextField
             fullWidth
             required
@@ -84,9 +96,9 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
             variant="outlined"
             error={!!(errors?.nom)}
             helperText={errors?.nom?.[0] || "Nom complet de la banque"}
+            size="medium"
           />
-        </Grid>
-        <Grid item xs={12}>
+          
           <TextField
             fullWidth
             label="Diminutif"
@@ -97,13 +109,13 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
             placeholder="Ex: BCM, SGMR, BNM..."
             error={!!(errors?.diminutif)}
             helperText={errors?.diminutif?.[0] || "Abréviation de la banque (optionnel)"}
+            size="medium"
           />
-        </Grid>
-        <Grid item xs={12}>
+          
           <TextField
             fullWidth
             multiline
-            rows={3}
+            rows={4}
             label="Adresse"
             name="adresse"
             value={formData.adresse}
@@ -112,10 +124,12 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
             placeholder="Ex: Avenue Gamal Abdel Nasser, Nouakchott..."
             error={!!(errors?.adresse)}
             helperText={errors?.adresse?.[0] || "Adresse complète de la banque (optionnel)"}
+            size="medium"
           />
-        </Grid>
-        <Grid item xs={12}>
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
+          
+          <Divider sx={{ my: 1 }} />
+          
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', pt: 2 }}>
             {onCancel && (
               <Button
                 variant="outlined"
@@ -123,6 +137,7 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
                 startIcon={<CancelIcon />}
                 onClick={onCancel}
                 size="large"
+                sx={{ minWidth: 140 }}
               >
                 Annuler
               </Button>
@@ -133,12 +148,13 @@ const BanqueForm = ({ banque, onSubmit, onCancel, errors = null }) => {
               color="primary"
               startIcon={banque?.id ? <EditIcon /> : <AddIcon />}
               size="large"
+              sx={{ minWidth: 140 }}
             >
               {banque?.id ? 'Mettre à jour' : 'Ajouter'}
             </Button>
           </Box>
-        </Grid>
-      </Grid>
+        </Box>
+      </Paper>
     </Box>
   );
 };

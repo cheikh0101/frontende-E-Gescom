@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Alert } from '@mui/material';
+import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Alert, Paper, Typography, Divider } from '@mui/material';
 import { useAppSelector } from '../app/hooks';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
+import { Add as AddIcon, Edit as EditIcon, Cancel as CancelIcon } from '@mui/icons-material';
 
 const AgentForm = ({
   onSubmit,
@@ -122,9 +123,9 @@ const AgentForm = ({
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
       {errors && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
           {typeof errors === 'string' ? errors : (
             <Box>
               <strong>Erreurs de validation :</strong>
@@ -139,215 +140,328 @@ const AgentForm = ({
           )}
         </Alert>
       )}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-        <FormControl fullWidth required>
-          <InputLabel>Civilité</InputLabel>
-          <Select
-            name="civilite"
-            value={formData.civilite}
-            onChange={handleChange}
-            label="Civilité"
-          >
-            <MenuItem value="Monsieur">Monsieur</MenuItem>
-            <MenuItem value="Madame">Madame</MenuItem>
-            <MenuItem value="Mademoiselle">Mademoiselle</MenuItem>
-          </Select>
-        </FormControl>
-        <TextField
-          name="prenom"
-          label="Prénom"
-          value={formData.prenom}
-          onChange={handleChange}
-          required
-          fullWidth
-        />
-        <TextField
-          name="nom"
-          label="Nom"
-          value={formData.nom}
-          onChange={handleChange}
-          required
-          fullWidth
-        />
-        <TextField
-          name="email"
-          label="Email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          fullWidth
-          error={!!(errors?.email)}
-          helperText={errors?.email?.[0] || ''}
-        />
-        <TextField
-          name="password"
-          label="Mot de passe"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          required={!agent?.id}
-          fullWidth
-          error={!!(errors?.password)}
-          helperText={errors?.password?.[0] || (agent?.id ? "Laissez vide pour ne pas changer" : "")}
-        />
-        <TextField
-          name="telephone"
-          label="Téléphone"
-          value={formData.telephone}
-          onChange={handleChange}
-          fullWidth
-          error={!!(errors?.telephone)}
-          helperText={errors?.telephone?.[0] || ''}
-        />
-        <TextField
-          name="matricule"
-          label="Matricule"
-          value={formData.matricule}
-          onChange={handleChange}
-          fullWidth
-          error={!!(errors?.matricule)}
-          helperText={errors?.matricule?.[0] || ''}
-        />
-        <DatePicker
-          label="Date de naissance"
-          value={formData.date_de_naissance ? dayjs(formData.date_de_naissance) : null}
-          onChange={(date) => {
-            setFormData((prev) => ({
-              ...prev,
-              date_de_naissance: date ? dayjs(date).format('YYYY-MM-DD') : null,
-            }));
-          }}
-          format="DD/MM/YYYY"
-          slotProps={{
-            textField: {
-              required: true,
-              fullWidth: true
-            }
-          }}
-        />
-        <TextField
-          name="lieu_de_naissance"
-          label="Lieu de naissance"
-          value={formData.lieu_de_naissance}
-          onChange={handleChange}
-          required
-          fullWidth
-        />
-        <TextField
-          name="numero_cni"
-          label="Numéro CNI"
-          value={formData.numero_cni}
-          onChange={handleChange}
-          required
-          fullWidth
-          error={!!(errors?.numero_cni)}
-          helperText={errors?.numero_cni?.[0] || ''}
-        />
-        <DatePicker
-          label="Date de délivrance CNI"
-          value={formData.date_delivrance_cni ? dayjs(formData.date_delivrance_cni) : null}
-          onChange={(date) => {
-            setFormData((prev) => ({
-              ...prev,
-              date_delivrance_cni: date ? dayjs(date).format('YYYY-MM-DD') : null,
-            }));
-          }}
-          format="DD/MM/YYYY"
-          slotProps={{
-            textField: {
-              fullWidth: true
-            }
-          }}
-        />
-        <TextField
-          name="lieu_delivrance_cni"
-          label="Lieu de délivrance CNI"
-          value={formData.lieu_delivrance_cni}
-          onChange={handleChange}
-          fullWidth
-        />
-        <TextField
-          name="adresse"
-          label="Adresse"
-          value={formData.adresse}
-          onChange={handleChange}
-          required
-          fullWidth
-          multiline
-          rows={2}
-          error={!!(errors?.adresse)}
-          helperText={errors?.adresse?.[0] || ''}
-        />
-        <FormControl fullWidth required>
-          <InputLabel>Structure</InputLabel>
-          <Select
-            name="structure_id"
-            value={formData.structure_id}
-            onChange={handleChange}
-            label="Structure"
-          >
-            {(structures || []).map((structure) => (
-              <MenuItem key={structure.id} value={structure.id}>
-                {structure.nom}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth required>
-          <InputLabel>Banque</InputLabel>
-          <Select
-            name="banque_id"
-            value={formData.banque_id}
-            onChange={handleChange}
-            label="Banque"
-          >
-            {(banques || []).map((banque) => (
-              <MenuItem key={banque.id} value={banque.id}>
-                {banque.nom}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <TextField
-          name="numero_compte"
-          label="Numéro de compte"
-          value={formData.numero_compte}
-          onChange={handleChange}
-          fullWidth
-          placeholder="Ex: 1234567890"
-          error={!!(errors?.numero_compte)}
-          helperText={errors?.numero_compte?.[0] || 'Numéro de compte bancaire (optionnel)'}
-        />
-        <TextField
-          name="iban"
-          label="IBAN"
-          value={formData.iban}
-          onChange={handleChange}
-          fullWidth
-          placeholder="Ex: MR1300012000010000000123456"
-          error={!!(errors?.iban)}
-          helperText={errors?.iban?.[0] || 'Code IBAN international (optionnel)'}
-        />
-      </Box>
-        <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-          <Button 
-            type="submit" 
-            variant="contained" 
-            disabled={isSubmitting}
-          >
-            {agent?.id ? 'Modifier' : 'Ajouter'}
-          </Button>
-          {onCancel && (
-            <Button 
-              variant="outlined" 
-              onClick={onCancel}
+      
+      <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
+        {agent?.id && (
+          <>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+              Modifier les informations de l'agent
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+          </>
+        )}
+        
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* Section Identité */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+              📋 Informations Personnelles
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <FormControl fullWidth required>
+                <InputLabel>Civilité</InputLabel>
+                <Select
+                  name="civilite"
+                  value={formData.civilite}
+                  onChange={handleChange}
+                  label="Civilité"
+                  size="medium"
+                >
+                  <MenuItem value="Monsieur">Monsieur</MenuItem>
+                  <MenuItem value="Madame">Madame</MenuItem>
+                  <MenuItem value="Mademoiselle">Mademoiselle</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                name="prenom"
+                label="Prénom"
+                value={formData.prenom}
+                onChange={handleChange}
+                required
+                fullWidth
+                size="medium"
+              />
+              <TextField
+                name="nom"
+                label="Nom"
+                value={formData.nom}
+                onChange={handleChange}
+                required
+                fullWidth
+                size="medium"
+              />
+              <TextField
+                name="email"
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                fullWidth
+                error={!!(errors?.email)}
+                helperText={errors?.email?.[0] || ''}
+                size="medium"
+              />
+            </Box>
+          </Box>
+
+          <Divider />
+
+          {/* Section Accès */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+              🔐 Accès et Identification
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <TextField
+                name="password"
+                label="Mot de passe"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                required={!agent?.id}
+                fullWidth
+                error={!!(errors?.password)}
+                helperText={errors?.password?.[0] || (agent?.id ? "Laissez vide pour ne pas changer" : "")}
+                size="medium"
+              />
+              <TextField
+                name="matricule"
+                label="Matricule"
+                value={formData.matricule}
+                onChange={handleChange}
+                fullWidth
+                error={!!(errors?.matricule)}
+                helperText={errors?.matricule?.[0] || 'Identifiant unique (optionnel)'}
+                size="medium"
+              />
+              <TextField
+                name="telephone"
+                label="Téléphone"
+                value={formData.telephone}
+                onChange={handleChange}
+                fullWidth
+                error={!!(errors?.telephone)}
+                helperText={errors?.telephone?.[0] || 'Ex: +222 XXXX XXXX'}
+                size="medium"
+              />
+            </Box>
+          </Box>
+
+          <Divider />
+
+          {/* Section Naissance */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+              🎂 Informations de Naissance
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <DatePicker
+                label="Date de naissance"
+                value={formData.date_de_naissance ? dayjs(formData.date_de_naissance) : null}
+                onChange={(date) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    date_de_naissance: date ? dayjs(date).format('YYYY-MM-DD') : null,
+                  }));
+                }}
+                format="DD/MM/YYYY"
+                slotProps={{
+                  textField: {
+                    required: true,
+                    fullWidth: true,
+                    size: "medium"
+                  }
+                }}
+              />
+              <TextField
+                name="lieu_de_naissance"
+                label="Lieu de naissance"
+                value={formData.lieu_de_naissance}
+                onChange={handleChange}
+                required
+                fullWidth
+                size="medium"
+              />
+            </Box>
+          </Box>
+
+          <Divider />
+
+          {/* Section CNI */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+              🪪 Informations CNI
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <TextField
+                name="numero_cni"
+                label="Numéro CNI"
+                value={formData.numero_cni}
+                onChange={handleChange}
+                required
+                fullWidth
+                error={!!(errors?.numero_cni)}
+                helperText={errors?.numero_cni?.[0] || ''}
+                size="medium"
+              />
+              <DatePicker
+                label="Date de délivrance CNI"
+                value={formData.date_delivrance_cni ? dayjs(formData.date_delivrance_cni) : null}
+                onChange={(date) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    date_delivrance_cni: date ? dayjs(date).format('YYYY-MM-DD') : null,
+                  }));
+                }}
+                format="DD/MM/YYYY"
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: "medium"
+                  }
+                }}
+              />
+              <TextField
+                name="lieu_delivrance_cni"
+                label="Lieu de délivrance CNI"
+                value={formData.lieu_delivrance_cni}
+                onChange={handleChange}
+                fullWidth
+                size="medium"
+              />
+            </Box>
+          </Box>
+
+          <Divider />
+
+          {/* Section Adresse */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+              📍 Adresse
+            </Typography>
+            <TextField
+              name="adresse"
+              label="Adresse"
+              value={formData.adresse}
+              onChange={handleChange}
+              required
+              fullWidth
+              multiline
+              rows={3}
+              error={!!(errors?.adresse)}
+              helperText={errors?.adresse?.[0] || 'Adresse complète de résidence'}
+              size="medium"
+            />
+          </Box>
+
+          <Divider />
+
+          {/* Section Structure et Banque */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+              🏢 Affectation et Banque
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <FormControl fullWidth required>
+                <InputLabel>Structure</InputLabel>
+                <Select
+                  name="structure_id"
+                  value={formData.structure_id}
+                  onChange={handleChange}
+                  label="Structure"
+                  size="medium"
+                >
+                  {(structures || []).map((structure) => (
+                    <MenuItem key={structure.id} value={structure.id}>
+                      {structure.nom}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth required>
+                <InputLabel>Banque</InputLabel>
+                <Select
+                  name="banque_id"
+                  value={formData.banque_id}
+                  onChange={handleChange}
+                  label="Banque"
+                  size="medium"
+                >
+                  {(banques || []).map((banque) => (
+                    <MenuItem key={banque.id} value={banque.id}>
+                      {banque.nom}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+
+          <Divider />
+
+          {/* Section Comptes Bancaires */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+              💰 Informations Bancaires
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <TextField
+                name="numero_compte"
+                label="Numéro de compte"
+                value={formData.numero_compte}
+                onChange={handleChange}
+                fullWidth
+                placeholder="Ex: 1234567890"
+                error={!!(errors?.numero_compte)}
+                helperText={errors?.numero_compte?.[0] || 'Numéro de compte bancaire (optionnel)'}
+                size="medium"
+              />
+              <TextField
+                name="iban"
+                label="IBAN"
+                value={formData.iban}
+                onChange={handleChange}
+                fullWidth
+                placeholder="Ex: MR1300012000010000000123456"
+                error={!!(errors?.iban)}
+                helperText={errors?.iban?.[0] || 'Code IBAN international (optionnel)'}
+                size="medium"
+              />
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+          
+          {/* Boutons d'action */}
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', pt: 2 }}>
+            {onCancel && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<CancelIcon />}
+                onClick={onCancel}
+                disabled={isSubmitting}
+                size="large"
+                sx={{ minWidth: 140 }}
+              >
+                Annuler
+              </Button>
+            )}
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              startIcon={agent?.id ? <EditIcon /> : <AddIcon />}
               disabled={isSubmitting}
+              size="large"
+              sx={{ minWidth: 140 }}
             >
-              Annuler
+              {agent?.id ? 'Mettre à jour' : 'Ajouter'}
             </Button>
-          )}
+          </Box>
         </Box>
+      </Paper>
     </Box>
   );
 };

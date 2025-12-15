@@ -5,6 +5,8 @@ import api from '../../services/api';
 export interface Structure {
   id: number;
   nom: string;
+  code: string;
+  type?: string;
   diminutif?: string;
   logo?: string;
   adresse: string;

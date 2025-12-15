@@ -37,7 +37,8 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Divider
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -45,9 +46,30 @@ import {
   Add as AddIcon,
   Person as PersonIcon,
   Search as SearchIcon,
-  Visibility as VisibilityIcon
+  Visibility as VisibilityIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  LocationOn as LocationOnIcon,
+  Badge as BadgeIcon,
+  CreditCard as CreditCardIcon,
+  Business as BusinessIcon,
+  Cake as CakeIcon
 } from '@mui/icons-material';
 import AgentForm from '../components/AgentForm';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+
+dayjs.locale('fr');
+
+// Fonction utilitaire pour formater les dates
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  try {
+    return dayjs(dateString).format('DD/MM/YYYY');
+  } catch (error) {
+    return '-';
+  }
+};
 
 const Agents = () => {
   const dispatch = useAppDispatch();
@@ -192,105 +214,188 @@ const Agents = () => {
         fullWidth
         PaperProps={{ sx: { borderRadius: 2 } }}
       >
-        <DialogTitle sx={{ bgcolor: 'info.main', color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PersonIcon />
-          Détails de l'agent
+        <DialogTitle sx={{ bgcolor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', display: 'flex', alignItems: 'center', gap: 2, p: 3 }}>
+          <PersonIcon sx={{ fontSize: 28 }} />
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 0 }}>
+              Profil de l'agent
+            </Typography>
+            <Typography variant="caption" sx={{ opacity: 0.9 }}>
+              {viewingAgent?.prenom} {viewingAgent?.nom}
+            </Typography>
+          </Box>
         </DialogTitle>
-        <DialogContent sx={{ mt: 3 }}>
+        <DialogContent sx={{ p: 3 }}>
           {viewingAgent && (
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Prénom</Typography>
-                <Typography variant="body1" fontWeight={500}>{viewingAgent.prenom}</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* En-tête avec Avatar */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+                <Avatar
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    bgcolor: 'primary.main',
+                    fontSize: '2rem',
+                    fontWeight: 600
+                  }}
+                >
+                  {`${viewingAgent.prenom?.[0] || ''}${viewingAgent.nom?.[0] || ''}`}
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {viewingAgent.civilite} {viewingAgent.prenom} {viewingAgent.nom}
+                  </Typography>
+                  {viewingAgent.matricule && (
+                    <Chip
+                      icon={<BadgeIcon />}
+                      label={viewingAgent.matricule}
+                      color="primary"
+                      size="small"
+                      sx={{ mt: 1 }}
+                    />
+                  )}
+                </Box>
               </Box>
+
+              <Box sx={{ borderTop: '2px solid #e0e0e0', pt: 2 }} />
+
+              {/* Section Contact */}
               <Box>
-                <Typography variant="caption" color="text.secondary">Nom</Typography>
-                <Typography variant="body1" fontWeight={500}>{viewingAgent.nom}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Email</Typography>
-                <Typography variant="body1">{viewingAgent.email}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Téléphone</Typography>
-                <Typography variant="body1">{viewingAgent.telephone || '-'}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Matricule</Typography>
-                <Typography variant="body1">
-                  {viewingAgent.matricule ? (
-                    <Chip label={viewingAgent.matricule} color="primary" size="small" />
-                  ) : '-'}
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <EmailIcon fontSize="small" />
+                  Informations de Contact
                 </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, ml: 3.5 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Email</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>{viewingAgent.email}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Téléphone</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>{viewingAgent.telephone || '-'}</Typography>
+                  </Box>
+                </Box>
               </Box>
+
+              {/* Section Identité */}
               <Box>
-                <Typography variant="caption" color="text.secondary">Date de naissance</Typography>
-                <Typography variant="body1">{viewingAgent.date_de_naissance || '-'}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Lieu de naissance</Typography>
-                <Typography variant="body1">{viewingAgent.lieu_de_naissance}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Civilité</Typography>
-                <Typography variant="body1">{viewingAgent.civilite || <em style={{ color: '#999' }}>Non renseigné</em>}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Numéro CNI</Typography>
-                <Typography variant="body1">{viewingAgent.numero_cni}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Date de délivrance CNI</Typography>
-                <Typography variant="body1">{viewingAgent.date_delivrance_cni || <em style={{ color: '#999' }}>Non renseigné</em>}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Lieu de délivrance CNI</Typography>
-                <Typography variant="body1">{viewingAgent.lieu_delivrance_cni || <em style={{ color: '#999' }}>Non renseigné</em>}</Typography>
-              </Box>
-              <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
-                <Typography variant="caption" color="text.secondary">Adresse</Typography>
-                <Typography variant="body1">{viewingAgent.adresse}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Structure</Typography>
-                <Typography variant="body1">
-                  <Chip 
-                    label={viewingAgent.structure?.nom || 'Non assigné'} 
-                    color="secondary" 
-                    size="small"
-                    variant="outlined"
-                  />
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <BadgeIcon fontSize="small" />
+                  Informations Personnelles
                 </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, ml: 3.5 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Date de naissance</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>{formatDate(viewingAgent.date_de_naissance)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Lieu de naissance</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>{viewingAgent.lieu_de_naissance || '-'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Numéro CNI</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5, fontFamily: 'monospace', fontWeight: 500 }}>
+                      {viewingAgent.numero_cni}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Date de délivrance CNI</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>{formatDate(viewingAgent.date_delivrance_cni)}</Typography>
+                  </Box>
+                  <Box sx={{ gridColumn: '1 / -1' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Lieu de délivrance CNI</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>{viewingAgent.lieu_delivrance_cni || '-'}</Typography>
+                  </Box>
+                </Box>
               </Box>
+
+              {/* Section Adresse */}
               <Box>
-                <Typography variant="caption" color="text.secondary">Banque</Typography>
-                <Typography variant="body1">
-                  <Chip 
-                    label={viewingAgent.banque?.nom || 'Non assigné'} 
-                    color="primary" 
-                    size="small"
-                    variant="outlined"
-                  />
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LocationOnIcon fontSize="small" />
+                  Adresse
                 </Typography>
+                <Box sx={{ ml: 3.5 }}>
+                  <Typography variant="body2">{viewingAgent.adresse}</Typography>
+                </Box>
               </Box>
+
+              {/* Section Affectation */}
               <Box>
-                <Typography variant="caption" color="text.secondary">Numéro de compte</Typography>
-                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                  {viewingAgent.numero_compte || '-'}
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <BusinessIcon fontSize="small" />
+                  Affectation et Organisation
                 </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, ml: 3.5 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Structure</Typography>
+                    <Box sx={{ mt: 0.8 }}>
+                      <Chip
+                        label={viewingAgent.structure?.nom || 'Non assigné'}
+                        color="secondary"
+                        size="small"
+                        variant="outlined"
+                      />
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Banque</Typography>
+                    <Box sx={{ mt: 0.8 }}>
+                      <Chip
+                        label={viewingAgent.banque?.nom || 'Non assigné'}
+                        color="primary"
+                        size="small"
+                        variant="outlined"
+                      />
+                    </Box>
+                  </Box>
+                </Box>
               </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">IBAN</Typography>
-                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                  {viewingAgent.iban || '-'}
-                </Typography>
-              </Box>
+
+              {/* Section Informations Bancaires */}
+              {(viewingAgent.numero_compte || viewingAgent.iban) && (
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CreditCardIcon fontSize="small" />
+                    Informations Bancaires
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, ml: 3.5 }}>
+                    {viewingAgent.numero_compte && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Numéro de compte</Typography>
+                        <Typography variant="body2" sx={{ mt: 0.5, fontFamily: 'monospace', fontWeight: 500 }}>
+                          {viewingAgent.numero_compte}
+                        </Typography>
+                      </Box>
+                    )}
+                    {viewingAgent.iban && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>IBAN</Typography>
+                        <Typography variant="body2" sx={{ mt: 0.5, fontFamily: 'monospace', fontWeight: 500, fontSize: '0.85rem' }}>
+                          {viewingAgent.iban}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              )}
             </Box>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
           <Button onClick={() => setViewingAgent(null)} variant="outlined">
             Fermer
+          </Button>
+          <Button
+            onClick={() => {
+              setEditingAgent(viewingAgent);
+              setViewingAgent(null);
+            }}
+            variant="contained"
+            color="primary"
+            startIcon={<EditIcon />}
+          >
+            Modifier
           </Button>
         </DialogActions>
       </Dialog>

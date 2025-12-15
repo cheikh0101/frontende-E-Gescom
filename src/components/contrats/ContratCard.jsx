@@ -17,7 +17,7 @@ import {
   History as HistoryIcon,
   FindInPage as FindInPageIcon,
   MoreVert as MoreVertIcon,
-  Calendar as CalendarIcon,
+  CalendarMonth as CalendarIcon,
   Person as PersonIcon,
   Business as BusinessIcon
 } from '@mui/icons-material';
